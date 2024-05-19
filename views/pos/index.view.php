@@ -709,7 +709,7 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
     document.getElementById('total-display').textContent = `Total: ₱${total.toFixed(2)}`;
   }
 
-  let existingProducts = {};
+  let existingProducts = {}; // Define existingProducts at the top level of your script
 
   function addToProductBar(product) {
     const productBar = document.querySelector('.products');
@@ -717,8 +717,10 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
 
     // Check if the product already exists
     if (existingProducts[productId]) {
+      // Retrieve maxQuantitySpan for the existing product
+      const maxQuantity = existingProducts[productId].maxQuantity;
       // Increase the quantity of the existing product
-      increaseQuantity(existingProducts[productId].quantitySpan);
+      increaseQuantity(existingProducts[productId].quantitySpan, maxQuantity);
     } else {
       // Add the product to the product bar
       const productDiv = document.createElement('div');
@@ -733,21 +735,27 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
       const quantitySpan = document.createElement('span');
       quantitySpan.textContent = '1';
       quantitySpan.setAttribute("class", "quantity");
+      const maxQuantitySpan = document.createElement('span');
+      maxQuantitySpan.textContent = product.SKU;
+      maxQuantitySpan.style.display = 'none';
 
       // Store the entire product object and the quantity span for future reference
+      // Adjusting the storage in existingProducts
       existingProducts[productId] = {
-        product: product, // Store the entire product object
-        quantitySpan: quantitySpan
+        product: product,
+        quantitySpan: quantitySpan,
+        maxQuantitySpan: maxQuantitySpan // Store maxQuantitySpan as well
       };
       console.log(existingProducts);
 
       // Create buttons for increasing and decreasing quantity
+      // Inside addToProductBar function, after defining maxQuantitySpan
       const increaseBtn = document.createElement('button');
       increaseBtn.textContent = '+';
       increaseBtn.addEventListener('click', function() {
-        increaseQuantity(quantitySpan);
+        // Ensure maxQuantitySpan is captured correctly here
+        increaseQuantity(quantitySpan, maxQuantitySpan); // Pass maxQuantitySpan as well
       });
-
       const decreaseBtn = document.createElement('button');
       decreaseBtn.textContent = '-';
       decreaseBtn.addEventListener('click', function() {
@@ -771,6 +779,7 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
       productDiv.appendChild(priceSpan);
       productDiv.appendChild(quantitySpan);
       productDiv.appendChild(increaseBtn);
+      productDiv.appendChild(maxQuantitySpan);
       productDiv.appendChild(decreaseBtn);
       productDiv.appendChild(removeBtn);
 
@@ -780,11 +789,20 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
     }
   }
 
-  function increaseQuantity(quantitySpan) {
+  function increaseQuantity(quantitySpan, maxQuantitySpan) {
     const quantity = parseInt(quantitySpan.textContent);
-    quantitySpan.textContent = quantity + 1;
-    console.log('Quantity increased'); // Debugging line
-    calculateTotal();
+    // Ensure maxQuantitySpan is correctly interpreted as a number
+    const maxQuantity = parseInt(maxQuantitySpan.textContent);
+
+    // Only increase the quantity if it's less than the maximum quantity
+    if (quantity < maxQuantity) {
+      quantitySpan.textContent = quantity + 1;
+      console.log('Quantity increased'); // Debugging line
+      calculateTotal();
+    } else {
+      alert('Maximum quantity reached for this product.');
+      console.log('Maximum quantity reached'); // Debugging line
+    }
   }
 
   function decreaseQuantity(quantitySpan) {
