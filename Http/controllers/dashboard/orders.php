@@ -1,18 +1,5 @@
 <?php
 include "connect.php";
-// Database connection
-// $servername = "localhost";
-// $user = "root";
-// $pass = "";
-// $dbname = "coffeeshop_db";
-
-
-// // Create a database connection
-// $conn = new mysqli($servername, $user, $pass, $dbname);
-
-// if ($conn->connect_error) {
-//     die("Connection failed: " . $conn->connect_error);
-// }
 
 //for pdo
 try {
@@ -21,6 +8,102 @@ try {
 } catch (PDOException $e) {
     die("Database connection failed: " . $e->getMessage());
 }
+
+//fetch data from tblproducts
+$sql = "SELECT * FROM tblproducts";
+$statement = $pdo->prepare($sql);
+$statement->execute();
+$productsData = $statement->fetchAll(PDO::FETCH_ASSOC);
+
+function recalculateStatus($pdo, $productsData)
+{
+    calculateSKU($pdo, $productsData);
+    foreach ($productsData as $productRow) {
+        $sql = "SELECT *
+        FROM
+        tblproducts_inventory PI
+        JOIN
+        tblproducts P ON PI.products_id = P.product_Id
+        JOIN
+        tblinventory I ON PI.inventory_id = I.inventory_id
+        WHERE
+        PI.products_id = :productId
+        ";
+        $checkInventory = $pdo->prepare($sql);
+        $checkInventory->bindParam(':productId', $productRow['product_id']);
+        $checkInventory->execute();
+        $productInventoryData = $checkInventory->fetchAll(PDO::FETCH_ASSOC);
+
+        if ($checkInventory->rowCount() === 0) {
+            $sqlChangeNull = "UPDATE tblproducts SET status = NULL WHERE tblproducts.product_id = :productId";
+            $changeNull = $pdo->prepare($sqlChangeNull);
+            $changeNull->bindParam(':productId', $productRow['product_id']);
+            $changeNull->execute();
+        } else {
+            if ($productRow['SKU'] > 0) {
+                $sqlChangeAvailable = "UPDATE tblproducts SET status = 'Available' WHERE tblproducts.product_id = :productId;";
+                $changeAvailable = $pdo->prepare($sqlChangeAvailable);
+                $changeAvailable->bindParam(':productId', $productRow['product_id']);
+                $changeAvailable->execute();
+            } else {
+                $sqlChangeNotAvailable = "UPDATE tblproducts SET status = 'Not Available' WHERE tblproducts.product_id = :productId;";
+                $changeNotAvailable = $pdo->prepare($sqlChangeNotAvailable);
+                $changeNotAvailable->bindParam(':productId', $productRow['product_id']);
+                $changeNotAvailable->execute();
+            }
+        }
+    }
+}
+function calculateSKU($pdo, $productsData)
+{
+    foreach ($productsData as $products) {
+        $sql = "SELECT I.quantity as inventoryQuantity, PI.quantity as ingredientQuantity
+        FROM
+        tblproducts_inventory PI
+        JOIN
+        tblproducts P ON PI.products_id = P.product_Id
+        JOIN
+        tblinventory I ON PI.inventory_id = I.inventory_id
+        WHERE
+        PI.products_id = :productId
+        ";
+        $checkInventory = $pdo->prepare($sql);
+        $checkInventory->bindParam(':productId', $products['product_id']);
+        $checkInventory->execute();
+        $productInventoryData = $checkInventory->fetchAll(PDO::FETCH_ASSOC);
+
+        // Initialize $productSKU to a very high number to ensure any valid division will be lower
+        $productSKU = PHP_INT_MAX;
+
+        foreach ($productInventoryData as $ingredients) {
+            // Ensure both keys exist and avoid division by zero
+            if (
+                isset($ingredients['inventoryQuantity'], $ingredients['ingredientQuantity']) &&
+                $ingredients['ingredientQuantity'] != 0
+            ) {
+                $divisionResult = floor($ingredients['inventoryQuantity'] / $ingredients['ingredientQuantity']);
+                // Update $productSKU if the current division result is lower than the previous minimum
+                if ($divisionResult < $productSKU) {
+                    $productSKU = $divisionResult;
+                }
+            }
+        }
+
+        // If no valid division was found (all were zero), set $productSKU to a special value or leave it unchanged
+        // For example, setting it to 0 or another placeholder value
+        if ($productSKU == PHP_INT_MAX) {
+            $productSKU = 0; // Or any other value indicating no valid SKU could be calculated
+        }
+
+        $sqlUpdateSKU = "UPDATE tblproducts SET SKU = :productSKU WHERE product_id = :productId";
+        $updateSKU = $pdo->prepare($sqlUpdateSKU);
+        $updateSKU->bindParam(':productSKU', $productSKU);
+        $updateSKU->bindParam(':productId', $products['product_id']);
+        $updateSKU->execute();
+    }
+}
+
+
 
 
 // complete order button 
@@ -49,6 +132,9 @@ if (isset($_POST['finish_order'])) {
         $statementDeduct->bindParam(':quantityOrder', $deductMulti['quantity'], PDO::PARAM_INT);
         $statementDeduct->bindParam(':inventoryID', $deduct['inventory_id']);
         $statementDeduct->execute();
+
+        //recalculate product sku and availability
+        recalculateStatus($pdo, $productsData);
 
         //fetch product details
         $getProductSql = "SELECT * FROM tblproducts WHERE product_id = :productid";

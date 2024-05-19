@@ -25,6 +25,7 @@ $promosData = $promosStatement->fetchAll(PDO::FETCH_ASSOC);
 //code that calculates whether a product is available, not available or ingredients are not set
 function recalculateStatus($pdo, $productsData)
 {
+    calculateSKU($pdo, $productsData);
     foreach ($productsData as $productRow) {
         $sql = "SELECT *
         FROM
@@ -47,75 +48,24 @@ function recalculateStatus($pdo, $productsData)
             $changeNull->bindParam(':productId', $productRow['product_id']);
             $changeNull->execute();
         } else {
-            foreach ($productInventoryData as $productInventoryRow) {
-                if ($productInventoryRow['quantity'] >= 10) {
-                    $sqlChangeAvailable = "UPDATE tblproducts SET status = 'Available' WHERE tblproducts.product_id = :productId;";
-                    $changeAvailable = $pdo->prepare($sqlChangeAvailable);
-                    $changeAvailable->bindParam(':productId', $productRow['product_id']);
-                    $changeAvailable->execute();
-                } else {
-                    $sqlChangeNotAvailable = "UPDATE tblproducts SET status = 'Not Available' WHERE tblproducts.product_id = :productId;";
-                    $changeNotAvailable = $pdo->prepare($sqlChangeNotAvailable);
-                    $changeNotAvailable->bindParam(':productId', $productRow['product_id']);
-                    $changeNotAvailable->execute();
-                    break;
-                }
+            if ($productRow['SKU'] > 0) {
+                $sqlChangeAvailable = "UPDATE tblproducts SET status = 'Available' WHERE tblproducts.product_id = :productId;";
+                $changeAvailable = $pdo->prepare($sqlChangeAvailable);
+                $changeAvailable->bindParam(':productId', $productRow['product_id']);
+                $changeAvailable->execute();
+            } else {
+                $sqlChangeNotAvailable = "UPDATE tblproducts SET status = 'Not Available' WHERE tblproducts.product_id = :productId;";
+                $changeNotAvailable = $pdo->prepare($sqlChangeNotAvailable);
+                $changeNotAvailable->bindParam(':productId', $productRow['product_id']);
+                $changeNotAvailable->execute();
             }
         }
     }
 }
-// call this to recalculate  status of product
-recalculateStatus($pdo, $productsData);
-
-//calculate the SKU of the products
-foreach ($productsData as $products) {
-    $sql = "SELECT I.quantity as inventoryQuantity, PI.quantity as ingredientQuantity
-        FROM
-        tblproducts_inventory PI
-        JOIN
-        tblproducts P ON PI.products_id = P.product_Id
-        JOIN
-        tblinventory I ON PI.inventory_id = I.inventory_id
-        WHERE
-        PI.products_id = :productId
-        ";
-    $checkInventory = $pdo->prepare($sql);
-    $checkInventory->bindParam(':productId', $products['product_id']);
-    $checkInventory->execute();
-    $productInventoryData = $checkInventory->fetchAll(PDO::FETCH_ASSOC);
-
-    // Initialize $productSKU to a very high number to ensure any valid division will be lower
-    $productSKU = PHP_INT_MAX;
-
-    foreach ($productInventoryData as $ingredients) {
-        // Ensure both keys exist and avoid division by zero
-        if (
-            isset($ingredients['inventoryQuantity'], $ingredients['ingredientQuantity']) &&
-            $ingredients['ingredientQuantity'] != 0
-        ) {
-            $divisionResult = floor($ingredients['inventoryQuantity'] / $ingredients['ingredientQuantity']);
-            // Update $productSKU if the current division result is lower than the previous minimum
-            if ($divisionResult < $productSKU) {
-                $productSKU = $divisionResult;
-            }
-        }
-    }
-
-    // If no valid division was found (all were zero), set $productSKU to a special value or leave it unchanged
-    // For example, setting it to 0 or another placeholder value
-    if ($productSKU == PHP_INT_MAX) {
-        $productSKU = 0; // Or any other value indicating no valid SKU could be calculated
-    }
-
-    $sqlUpdateSKU = "UPDATE tblproducts SET SKU = :productSKU WHERE product_id = :productId";
-    $updateSKU = $pdo->prepare($sqlUpdateSKU);
-    $updateSKU->bindParam(':productSKU', $productSKU);
-    $updateSKU->bindParam(':productId', $products['product_id']);
-    $updateSKU->execute();
-}
-
-// foreach ($productsData as $products) {
-//     $sql = "SELECT I.quantity as inventoryQuantity, PI.quantity as ingredientQuantity
+// function recalculateStatus($pdo, $productsData)
+// {
+//     foreach ($productsData as $productRow) {
+//         $sql = "SELECT *
 //         FROM
 //         tblproducts_inventory PI
 //         JOIN
@@ -125,24 +75,89 @@ foreach ($productsData as $products) {
 //         WHERE
 //         PI.products_id = :productId
 //         ";
-//     $checkInventory = $pdo->prepare($sql);
-//     $checkInventory->bindParam(':productId', $products['product_id']);
-//     $checkInventory->execute();
-//     $productInventoryData = $checkInventory->fetchAll(PDO::FETCH_ASSOC);
+//         $checkInventory = $pdo->prepare($sql);
+//         $checkInventory->bindParam(':productId', $productRow['product_id']);
+//         $checkInventory->execute();
+//         $productInventoryData = $checkInventory->fetchAll(PDO::FETCH_ASSOC);
 
-//     $productSKU = 0;
-//     foreach ($productInventoryData as $ingredients) {
-//         if (floor($ingredients['inventoryQuantity'] / $ingredients['ingredientQuantity']) >= $productSKU) {
-//             $productSKU = floor($ingredients['inventoryQuantity'] / $ingredients['ingredientQuantity']);
+//         if ($checkInventory->rowCount() === 0) {
+//             $sqlChangeNull = "UPDATE tblproducts SET status = NULL WHERE tblproducts.product_id = :productId";
+//             $changeNull = $pdo->prepare($sqlChangeNull);
+//             $changeNull->bindParam(':productId', $productRow['product_id']);
+//             $changeNull->execute();
+//         } else {
+//             foreach ($productInventoryData as $productInventoryRow) {
+//                 if ($productInventoryRow['quantity'] >= 10) {
+//                     $sqlChangeAvailable = "UPDATE tblproducts SET status = 'Available' WHERE tblproducts.product_id = :productId;";
+//                     $changeAvailable = $pdo->prepare($sqlChangeAvailable);
+//                     $changeAvailable->bindParam(':productId', $productRow['product_id']);
+//                     $changeAvailable->execute();
+//                 } else {
+//                     $sqlChangeNotAvailable = "UPDATE tblproducts SET status = 'Not Available' WHERE tblproducts.product_id = :productId;";
+//                     $changeNotAvailable = $pdo->prepare($sqlChangeNotAvailable);
+//                     $changeNotAvailable->bindParam(':productId', $productRow['product_id']);
+//                     $changeNotAvailable->execute();
+//                     break;
+//                 }
+//             }
 //         }
 //     }
-
-//     $sqlUpdateSKU = "UPDATE tblproducts SET SKU = :productSKU WHERE product_id = :productId;";
-//     $updateSKU = $pdo->prepare($sqlUpdateSKU);
-//     $updateSKU->bindParam(':productSKU', $productSKU);
-//     $updateSKU->bindParam(':productId', $products['product_id']);
-//     $updateSKU->execute();
 // }
+
+// call this to recalculate  status of product
+recalculateStatus($pdo, $productsData);
+
+//calculate the SKU of the products
+
+function calculateSKU($pdo, $productsData)
+{
+    foreach ($productsData as $products) {
+        $sql = "SELECT I.quantity as inventoryQuantity, PI.quantity as ingredientQuantity
+        FROM
+        tblproducts_inventory PI
+        JOIN
+        tblproducts P ON PI.products_id = P.product_Id
+        JOIN
+        tblinventory I ON PI.inventory_id = I.inventory_id
+        WHERE
+        PI.products_id = :productId
+        ";
+        $checkInventory = $pdo->prepare($sql);
+        $checkInventory->bindParam(':productId', $products['product_id']);
+        $checkInventory->execute();
+        $productInventoryData = $checkInventory->fetchAll(PDO::FETCH_ASSOC);
+
+        // Initialize $productSKU to a very high number to ensure any valid division will be lower
+        $productSKU = PHP_INT_MAX;
+
+        foreach ($productInventoryData as $ingredients) {
+            // Ensure both keys exist and avoid division by zero
+            if (
+                isset($ingredients['inventoryQuantity'], $ingredients['ingredientQuantity']) &&
+                $ingredients['ingredientQuantity'] != 0
+            ) {
+                $divisionResult = floor($ingredients['inventoryQuantity'] / $ingredients['ingredientQuantity']);
+                // Update $productSKU if the current division result is lower than the previous minimum
+                if ($divisionResult < $productSKU) {
+                    $productSKU = $divisionResult;
+                }
+            }
+        }
+
+        // If no valid division was found (all were zero), set $productSKU to a special value or leave it unchanged
+        // For example, setting it to 0 or another placeholder value
+        if ($productSKU == PHP_INT_MAX) {
+            $productSKU = 0; // Or any other value indicating no valid SKU could be calculated
+        }
+
+        $sqlUpdateSKU = "UPDATE tblproducts SET SKU = :productSKU WHERE product_id = :productId";
+        $updateSKU = $pdo->prepare($sqlUpdateSKU);
+        $updateSKU->bindParam(':productSKU', $productSKU);
+        $updateSKU->bindParam(':productId', $products['product_id']);
+        $updateSKU->execute();
+    }
+}
+calculateSKU($pdo, $productsData);
 
 // Fetch products data
 $sql = "SELECT * FROM tblproducts";
