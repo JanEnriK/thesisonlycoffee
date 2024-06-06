@@ -29,9 +29,9 @@ $coffee_data = $db->query("SELECT * FROM tblcoffeeshop")->get();
                     <li class="nav-item">
                         <a href="/about" class="nav-item nav-link h6">About</a>
                     </li>
-                    <li class="nav-item">
+                    <!-- <li class="nav-item">
                         <a href="/service" class="nav-item nav-link h6">Service</a>
-                    </li>
+                    </li> -->
                     <li class="nav-item">
                         <a href="/menu" class="nav-item nav-link h6">Menu</a>
                     </li>

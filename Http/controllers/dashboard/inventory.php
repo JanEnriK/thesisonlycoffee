@@ -9,6 +9,15 @@ $productsData = $statement->fetchAll(PDO::FETCH_ASSOC);
 function recalculateStatus($pdo, $productsData)
 {
     calculateSKU($pdo, $productsData);
+
+    // Fetch data from tblinventory
+    $sql = "SELECT * FROM tblinventory";
+    $statement = $pdo->prepare($sql);
+    $statement->execute();
+    $inventoryData = $statement->fetchAll(PDO::FETCH_ASSOC);
+
+    updateInventoryStatus($pdo, $inventoryData);
+
     foreach ($productsData as $productRow) {
         $sql = "SELECT *
         FROM
@@ -96,11 +105,38 @@ function calculateSKU($pdo, $productsData)
 }
 
 
+
 // Fetch data from tblinventory
 $sql = "SELECT * FROM tblinventory";
 $statement = $pdo->prepare($sql);
 $statement->execute();
 $inventoryData = $statement->fetchAll(PDO::FETCH_ASSOC);
+
+function updateInventoryStatus($pdo, $inventoryData)
+{
+    foreach ($inventoryData as $inventory) {
+        if ($inventory['quantity'] > $inventory['reorder_point']) {
+            $sqlUpdateStatus = "UPDATE tblinventory SET status = 'In Stock' WHERE inventory_id = :inventoryId";
+            $updateStatus = $pdo->prepare($sqlUpdateStatus);
+            $updateStatus->bindParam(':inventoryId', $inventory['inventory_id']);
+            $updateStatus->execute();
+        } else {
+            $sqlUpdateStatus = "UPDATE tblinventory SET status = 'Low Stock' WHERE inventory_id = :inventoryId";
+            $updateStatus = $pdo->prepare($sqlUpdateStatus);
+            $updateStatus->bindParam(':inventoryId', $inventory['inventory_id']);
+            $updateStatus->execute();
+        }
+    }
+}
+
+updateInventoryStatus($pdo, $inventoryData);
+
+// Fetch data from tblinventory
+$sql = "SELECT * FROM tblinventory";
+$statement = $pdo->prepare($sql);
+$statement->execute();
+$inventoryData = $statement->fetchAll(PDO::FETCH_ASSOC);
+
 
 // Fetch data from tblcategory_inventory
 $sqlCategoryInventory = "SELECT * FROM tblcategory_inventory";
@@ -208,13 +244,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $newType = $_POST['new_type'];
         $newQuantity = $_POST['new_quantity'];
         $newUnit = $_POST['new_unit'];
+        $newReorderPoint = $_POST['new_reorder_point'];
 
-        $sqlAdd = "INSERT INTO tblinventory (inventory_item, item_type ,quantity, unit) VALUES (:newItem, :newType, :newQuantity, :newUnit)";
+        $sqlAdd = "INSERT INTO tblinventory (inventory_item, item_type ,quantity, unit,reorder_point) VALUES (:newItem, :newType, :newQuantity, :newUnit, :reorderPoint)";
         $statementAdd = $pdo->prepare($sqlAdd);
         $statementAdd->bindParam(':newItem', $newItem);
         $statementAdd->bindParam(':newType', $newType);
         $statementAdd->bindParam(':newQuantity', $newQuantity);
         $statementAdd->bindParam(':newUnit', $newUnit);
+        $statementAdd->bindParam(':reorderPoint', $newReorderPoint);
         $statementAdd->execute();
 
         //get the next inventory_id in tblinventroy
@@ -269,15 +307,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $editedType = $_POST['edited_type'];
             // $editedQuantity = $_POST['edited_quantity'];
             $editedUnit = $_POST['edited_unit'];
+            $editedReorderPoint = $_POST['edited_reorder_point'];
 
 
-            $sqlEdit = "UPDATE tblinventory SET inventory_item = :editedItem, item_type = :editedType, unit = :editedUnit  WHERE inventory_id = :editItemId";
+            $sqlEdit = "UPDATE tblinventory SET inventory_item = :editedItem, item_type = :editedType, unit = :editedUnit, reorder_point = :editedReorderPoint  WHERE inventory_id = :editItemId";
             $statementEdit = $pdo->prepare($sqlEdit);
             $statementEdit->bindParam(':editItemId', $editItemId);
             $statementEdit->bindParam(':editedItem', $editedItem);
             $statementEdit->bindParam(':editedType', $editedType);
             // $statementEdit->bindParam(':editedQuantity', $editedQuantity);
             $statementEdit->bindParam(':editedUnit', $editedUnit);
+            $statementEdit->bindParam(':editedReorderPoint', $editedReorderPoint);
             $statementEdit->execute();
 
             //add user log [edited an inventory item]
@@ -528,7 +568,7 @@ $sqlLowStock = "SELECT COUNT(*) as lowStock
                 FROM (
                     SELECT * 
                     FROM tblinventory
-                    WHERE quantity >= 0 AND quantity <= 10
+                    WHERE status = 'Low Stock'
                 ) AS subquery";
 
 $statementLowStock = $pdo->prepare($sqlLowStock);

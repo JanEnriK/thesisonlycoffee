@@ -1,5 +1,6 @@
 <?php require "partials/head.php"; ?>
 <?php require "partials/nav.php"; ?>
+<?php include "connect.php"; ?>
 
 <style>
     body {
@@ -42,6 +43,14 @@
     .low-stock-container {
         background-color: #ff6347;
         color: #fff;
+        user-select: none;
+    }
+
+    .low-stock-container:hover {
+        background-color: #fff;
+        color: #ff6347;
+        border: 1px solid;
+        box-shadow: 2px 2px 2px #ff6347;
     }
 
     .zero-stock-container {
@@ -60,7 +69,7 @@
     }
 
     table {
-        width: 70%;
+        width: 100%;
         border-collapse: collapse;
         border: #333;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -191,6 +200,7 @@
         /* Optional: Alternate background color for headers */
     }
 </style>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     // toggle row of edit inventory data 
@@ -273,6 +283,7 @@
             body.style.overflow = 'visible';
         });
     });
+
     // filing pilferage
     document.addEventListener('DOMContentLoaded', function() {
         const filePilferageBtn = document.getElementById('filePilferageBtn');
@@ -301,10 +312,42 @@
         const addInventoryBtn = document.getElementById('addInventoryBtn');
         const addInventoryOverlay = document.getElementById('addInventoryOverlay');
         const closeAddInventoryFormBtn = document.getElementById('closeAddInventoryFormBtn');
+        const selectSupplyItem = document.getElementById('supply_item');
+        const lowStockOverlay = document.getElementById('lowStockOverlay');
+        const unitIncrease = document.getElementById('unit_increase');
         const body = document.body;
 
         // Initially hide the add inventory form
         addInventoryOverlay.style.display = 'none';
+
+        // Function to close the Low Stock modal and open the Add Inventory modal with a pre-selected option
+        function handleAddSupplyClick(event) {
+            if (event.target.id.startsWith('supply_')) {
+                const inventoryId = event.target.dataset.id; // Get the inventory_id from the data-id attribute
+                lowStockOverlay.style.display = 'none'; // Close the Low Stock modal
+                addInventoryOverlay.style.display = 'flex'; // Open the Add Inventory modal
+                document.body.style.overflow = 'hidden'; // Prevent scrolling on the body
+
+                // Find the option in the dropdown that matches the inventory_id and set it as selected
+                const options = selectSupplyItem.options;
+                for (let i = 0; i < options.length; i++) {
+                    if (options[i].getAttribute('data-id-increase') === inventoryId) {
+                        selectSupplyItem.selectedIndex = i;
+                        break;
+                    }
+                }
+
+                // Update the unit name display based on the selected option
+                const selectedOption = selectSupplyItem.options[selectSupplyItem.selectedIndex];
+                if (selectedOption && selectedOption.hasAttribute('unit-name-increase')) {
+                    const unitName = selectedOption.getAttribute('unit-name-increase');
+                    unitIncrease.textContent = "Unit: " + unitName;
+                }
+            }
+        }
+
+        // Attach the event listener to the Low Stock modal
+        lowStockOverlay.addEventListener('click', handleAddSupplyClick);
 
         // Show the form when the button is clicked
         addInventoryBtn.addEventListener('click', function() {
@@ -319,6 +362,32 @@
 
         });
     });
+
+
+
+    // low stock modal
+    document.addEventListener('DOMContentLoaded', function() {
+        const lowStockBtn = document.getElementById('lowStockContainer');
+        const lowStockOverlay = document.getElementById('lowStockOverlay');
+        const closelowStockOverlay = document.getElementById('closelowStockOverlay');
+        const body = document.body;
+
+        // Initially hide the low stock modal
+        lowStockOverlay.style.display = 'none';
+
+        // Show the form when the button is clicked
+        lowStockBtn.addEventListener('click', function() {
+            lowStockOverlay.style.display = 'flex';
+            body.style.overflow = 'hidden';
+        });
+
+        // Close the form when the close button is clicked
+        closelowStockOverlay.addEventListener('click', function() {
+            lowStockOverlay.style.display = 'none';
+            body.style.overflow = 'visible';
+        });
+    });
+
     //alert add
     function confirmAdd() {
         return confirm("Are you sure you want to add this inventory?");
@@ -340,6 +409,7 @@
     function confirmEdit() {
         return confirm("Are you sure you want to edit this inventory item?");
     }
+
     //setting the inventory item id for hidden input and shows the unit of that current selected inventory for filing filperage
     document.addEventListener('DOMContentLoaded', function() {
         const selectElement = document.getElementById('new_item');
@@ -380,309 +450,360 @@
             unitSpan.textContent = "Unit: " + unitName;
         });
 
-        // Comment out or remove the initial trigger for debugging purposes
-        // selectElement.dispatchEvent(new Event('change'));
     });
 </script>
 
-<!-- Filing a filperage -->
-<div class="overlay" id="filePilferageOverlay">
-    <div class="overlay-content">
-        <div class="info-box">
-            <button id="closePilferageFormBtn" class="button delete-button">X</button>
-            <h2>File Pilferage</h2>
-            <form method="post" action="/admin_dashboard/inventory" id="addInventoryForm">
-                <div class="form-group">
-                    <!-- Hidden input to store the inventory_id -->
-                    <input type="hidden" name="item_id" id="item_id" value="">
-
-                    <label for="new_item">Inventory Item:</label>
-                    <select name="new_item" class="form-control" id="new_item" required>
-                        <option value="" selected disabled>Inventory Item:</option>
-                        <?php foreach ($inventoryData as $item) : ?>
-                            <option value="<?= $item['inventory_item'] ?>" data-id="<?= $item['inventory_id'] ?>" unit-name="<?= $item['unit'] ?>">
-                                <?= $item['inventory_item'] ?> <!-- Display the inventory_item -->
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="form-group" style="width: 50%; display: inline-block;">
-                    <label for="new_quantity">Quantity to reduce: </label>
-                    <input type="number" class="form-control" name="new_quantity" placeholder="Quantity" required>
-                </div>
-                <span style="color: grey; font-size: small;" id=unit></span>
-                <div class="form-group">
-                    <p style="color: black"><label for="reason">Reason: </label></p>
-                    <textarea name="reason" required></textarea>
-                </div>
-                <button type="submit" name="submit_file" id="addButton" class="button add-button" style="width:100%;">File</button>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Adding shit in inv -->
-<div class="overlay" id="addInventoryOverlay">
-    <div class="overlay-content">
-        <div class="info-box">
-            <button id="closeAddInventoryFormBtn" class="button delete-button">X</button>
-            <h2>Add Inventory</h2>
-            <form method="post" action="/admin_dashboard/inventory" id="addInventoryForm">
-                <div class="form-group">
-                    <input type="hidden" name="item_id_increase" id="item_id_increase" value="">
-                    <label for="new_item">Inventory Item:</label>
-                    <select name="supply_item" class="form-control" id="supply_item" required>
-                        <option value="" selected disabled>Inventory Item:</option>
-                        <?php foreach ($inventoryData as $item) : ?>
-                            <option value="<?= $item['inventory_item'] ?>" data-id-increase="<?= $item['inventory_id'] ?>" unit-name-increase="<?= $item['unit'] ?>">
-                                <?= $item['inventory_item'] ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="form-group" style="width: 50%; display: inline-block;">
-                    <label for="new_quantity">Quantity to add in supply: </label>
-                    <input type="number" class="form-control" name="new_quantity" placeholder="Quantity" required>
-                </div>
-                <span style="color: grey; font-size: small;" id="unit_increase"></span>
-                <button type="submit" name="submit_add_item" id="addInventoryButton" class="button add-button" style="width:100%;">Add</button>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!--hidden add inventory form-->
-<div class="overlay" id="overlay">
-    <div class="overlay-content">
-        <div class="info-box">
-            <button id="closeFormBtn" class="button delete-button">X</button>
-            <h2>Add New Inventory</h2>
-            <form method="post" action="/admin_dashboard/inventory" id="addInventoryForm" onsubmit="return confirmAdd()">
-                <div class="form-group">
-                    <label for="new_item">Inventory Item:</label>
-                    <input type="text" class="form-control" name="new_item" placeholder="Inventory Item:" required>
-                </div>
-                <div class="form-group">
-                    <label for="new_type">Inventory Type:</label>
-                    <select name="new_type" class="form-control" id="new_type" required>
-                        <option value="" selected disabled>Inventory Type:</option>
-                        <?php foreach ($categoryInventoryData as $category) : ?>
-                            <option value="<?= $category['inventory_category'] ?>">
-                                <?= $category['inventory_category'] ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="new_quantity">Quantity: </label>
-                    <input type="number" class="form-control" name="new_quantity" placeholder="Quantity: " required>
-                </div>
-                <div class="form-group">
-                    <label for="new_unit">Unit: </label>
-                    <input type="text" class="form-control" name="new_unit" placeholder="Unit:" required>
-                </div>
-                <button type="submit" name="submit_add" id="addButton" class="button add-button" style="width:100%;">Add</button>
-        </div>
-        </form>
-    </div>
-</div>
-
-<!--hidden update all inventory form-->
-<div class="overlay" id="updateInventory">
-    <div class="overlay-content">
-        <div class="info-box">
-            <button id="closeUpdateFormBtn" class="button delete-button">X</button>
-            <h2>Update All Inventory</h2>
-            <form method="post" action="/admin_dashboard/inventory" id="updateInventoryForm" onsubmit="return confirmUpdate()">
-                <div>
-                    <table class="tableDefault">
-                        <tr class="tableDefault">
-                            <th class="tableDefault">Item</th>
-                            <th class="tableDefault">Current Quantity</th>
-                            <th class="tableDefault">New Quantity</th>
+<body>
+    <!-- low stock modal -->
+    <div class="overlay" id="lowStockOverlay">
+        <div class="overlay-content">
+            <div class="info-box">
+                <button id="closelowStockOverlay" class="button delete-button">X</button>
+                <h2>Low Stock Inventory</h2>
+                <table>
+                    <tr>
+                        <th>Inventory Item</th>
+                        <th>Category</th>
+                        <th>Quantity</th>
+                        <th>Unit</th>
+                        <th>Action</th>
+                    </tr>
+                    <?php
+                    $sql = "SELECT * FROM tblinventory WHERE status = 'Low Stock'";
+                    $statement = $pdo->prepare($sql);
+                    $statement->execute();
+                    $lowStock = $statement->fetchAll(PDO::FETCH_ASSOC);
+                    if (!empty($lowStock)) {
+                        foreach ($lowStock as $row) : ?>
+                            <tr>
+                                <td><?= $row['inventory_item'] ?></td>
+                                <td><?= $row['item_type'] ?></td>
+                                <td><?= $row['quantity'] ?></td>
+                                <td><?= $row['unit'] ?></td>
+                                <td><button id="supply_<?= $row['inventory_id'] ?>" type="button" value="<?= $row['inventory_id'] ?>" data-id="<?= $row['inventory_id'] ?>">Add Supply</button></td>
+                            </tr>
+                        <?php endforeach;
+                    } else { ?>
+                        <tr>
+                            <td style="text-align: center;" colspan="5">No current inventory marked as low stock.</td>
                         </tr>
-                        <?php foreach ($inventoryData as $inventoryDataRow) : ?>
+                    <?php } ?>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filing a filperage -->
+    <div class="overlay" id="filePilferageOverlay">
+        <div class="overlay-content">
+            <div class="info-box">
+                <button id="closePilferageFormBtn" class="button delete-button">X</button>
+                <h2>File Pilferage</h2>
+                <form method="post" action="/admin_dashboard/inventory" id="addInventoryForm">
+                    <div class="form-group">
+                        <!-- Hidden input to store the inventory_id -->
+                        <input type="hidden" name="item_id" id="item_id" value="">
+
+                        <label for="new_item">Inventory Item:</label>
+                        <select name="new_item" class="form-control" id="new_item" required>
+                            <option value="" selected disabled>Inventory Item:</option>
+                            <?php foreach ($inventoryData as $item) : ?>
+                                <option value="<?= $item['inventory_item'] ?>" data-id="<?= $item['inventory_id'] ?>" unit-name="<?= $item['unit'] ?>">
+                                    <?= $item['inventory_item'] ?> <!-- Display the inventory_item -->
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="form-group" style="width: 50%; display: inline-block;">
+                        <label for="new_quantity">Quantity to reduce: </label>
+                        <input type="number" class="form-control" name="new_quantity" placeholder="Quantity" required>
+                    </div>
+                    <span style="color: grey; font-size: small;" id=unit></span>
+                    <div class="form-group">
+                        <p style="color: black"><label for="reason">Reason: </label></p>
+                        <textarea name="reason" required></textarea>
+                    </div>
+                    <button type="submit" name="submit_file" id="addButton" class="button add-button" style="width:100%;">File</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Adding shit in inv -->
+    <div class="overlay" id="addInventoryOverlay">
+        <div class="overlay-content">
+            <div class="info-box">
+                <button id="closeAddInventoryFormBtn" class="button delete-button">X</button>
+                <h2>Add Inventory</h2>
+                <form method="post" action="/admin_dashboard/inventory" id="addInventoryForm">
+                    <div class="form-group">
+                        <input type="hidden" name="item_id_increase" id="item_id_increase" value="">
+                        <label for="new_item">Inventory Item:</label>
+                        <select name="supply_item" class="form-control" id="supply_item" required>
+                            <option value="" selected disabled>Inventory Item:</option>
+                            <?php foreach ($inventoryData as $item) : ?>
+                                <option value="<?= $item['inventory_item'] ?>" data-id-increase="<?= $item['inventory_id'] ?>" unit-name-increase="<?= $item['unit'] ?>">
+                                    <?= $item['inventory_item'] ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="form-group" style="width: 50%; display: inline-block;">
+                        <label for="new_quantity">Quantity to add in supply: </label>
+                        <input type="number" class="form-control" name="new_quantity" placeholder="Quantity" required>
+                    </div>
+                    <span style="color: grey; font-size: small;" id="unit_increase"></span>
+                    <button type="submit" name="submit_add_item" id="addInventoryButton" class="button add-button" style="width:100%;">Add</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!--hidden add inventory form-->
+    <div class="overlay" id="overlay">
+        <div class="overlay-content">
+            <div class="info-box">
+                <button id="closeFormBtn" class="button delete-button">X</button>
+                <h2>Add New Inventory</h2>
+                <form method="post" action="/admin_dashboard/inventory" id="addInventoryForm" onsubmit="return confirmAdd()">
+                    <div class="form-group">
+                        <label for="new_item">Inventory Item:</label>
+                        <input type="text" class="form-control" name="new_item" placeholder="Inventory Item:" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new_type">Inventory Type:</label>
+                        <select name="new_type" class="form-control" id="new_type" required>
+                            <option value="" selected disabled>Inventory Type:</option>
+                            <?php foreach ($categoryInventoryData as $category) : ?>
+                                <option value="<?= $category['inventory_category'] ?>">
+                                    <?= $category['inventory_category'] ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="new_quantity">Quantity: </label>
+                        <input type="number" class="form-control" name="new_quantity" placeholder="Quantity: " required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new_unit">Unit: </label>
+                        <input type="text" class="form-control" name="new_unit" placeholder="Unit:" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new_reorder_point">Re-Order Point: </label>
+                        <input type="text" class="form-control" name="new_reorder_point" placeholder="Re-Order Point:" required>
+                    </div>
+                    <button type="submit" name="submit_add" id="addButton" class="button add-button" style="width:100%;">Add</button>
+            </div>
+            </form>
+        </div>
+    </div>
+
+    <!--hidden update all inventory form-->
+    <div class="overlay" id="updateInventory">
+        <div class="overlay-content">
+            <div class="info-box">
+                <button id="closeUpdateFormBtn" class="button delete-button">X</button>
+                <h2>Update All Inventory</h2>
+                <form method="post" action="/admin_dashboard/inventory" id="updateInventoryForm" onsubmit="return confirmUpdate()">
+                    <div>
+                        <table class="tableDefault">
                             <tr class="tableDefault">
-                                <td class="tableDefault">
-                                    <?= $inventoryDataRow['inventory_item'] ?>
+                                <th class="tableDefault">Item</th>
+                                <th class="tableDefault">Current Quantity</th>
+                                <th class="tableDefault">New Quantity</th>
+                            </tr>
+                            <?php foreach ($inventoryData as $inventoryDataRow) : ?>
+                                <tr class="tableDefault">
+                                    <td class="tableDefault">
+                                        <?= $inventoryDataRow['inventory_item'] ?>
+                                    </td>
+                                    <td class="tableDefault">
+                                        <?= $inventoryDataRow['quantity'] ?>
+                                    </td>
+                                    <td class="tableDefault">
+                                        <input type="number" name="<?= "newQuantity" . $inventoryDataRow['inventory_id'] ?>" placeholder="Edit Quantity" value="<?= $inventoryDataRow['quantity'] ?>" required>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </table>
+                    </div>
+                    <br>
+                    <button type="submit" name="submit_update_all" id="applyUpdateButton" class="button add-button" style="width:100%;">Apply Update</button>
+                    <br><br>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!--hidden inventory category form-->
+    <div class="overlay" id="inventoryCategory">
+        <div class="overlay-content">
+            <div class="info-box">
+                <button id="closeCategoryForm" class="button delete-button">X</button>
+                <h2>Inventory Categories</h2>
+                <div class="form-group">
+                    <table style="margin: auto;">
+                        <?php foreach ($categoryInventoryData as $category) : ?>
+                            <tr>
+
+                                <td>
+                                    <?= $category['inventory_category'] ?>
                                 </td>
-                                <td class="tableDefault">
-                                    <?= $inventoryDataRow['quantity'] ?>
+                                <td>
+                                    <form method="post" action="/admin_dashboard/inventory" onsubmit="return confirm('Are you sure you want to delete this category?');">
+                                        <input type="hidden" name="update_category_id" value="<?= $category['categoryInventory_id'] ?>">
+                                        <button type="button" class="button edit-button" onclick="toggleEditCategoryForm('editCategory<?= $category['categoryInventory_id'] ?>')">✎</button>
+                                        <input type="hidden" name="delete_category_id" value="<?= $category['categoryInventory_id'] ?>">
+                                        <button type="submit" name="categoryDelete" class="button delete-button">✖</button>
+                                    </form>
                                 </td>
-                                <td class="tableDefault">
-                                    <input type="number" name="<?= "newQuantity" . $inventoryDataRow['inventory_id'] ?>" placeholder="Edit Quantity" value="<?= $inventoryDataRow['quantity'] ?>" required>
+                            </tr>
+                            <tr class="edit-form" id="editCategory<?= $category['categoryInventory_id'] ?>">
+                                <td colspan="2">
+                                    <form method="post" action="" onsubmit="return confirm('Are you sure you want to change this category?');">
+                                        <input type="hidden" name="update_category_id" value="<?= $category['categoryInventory_id'] ?>">
+                                        <input type="text" name="update_inventoryCategory" value="<?= $category['inventory_category'] ?>" required>
+                                        <button type="submit" name="update_category" class="button edit-button">💾</button>
+                                    </form>
                                 </td>
+
                             </tr>
                         <?php endforeach; ?>
                     </table>
                 </div>
+                <h2>Add New Category</h2>
+                <form method="post" action="/admin_dashboard/inventory" onsubmit="return confirm('Are you sure you want to add this category?');">
+                    <div class="form-group">
+                        <label for="new_category">Inventory Item:</label>
+                        <input type="text" class="form-control" name="new_category" placeholder="Category Name" required>
+                    </div>
+                    <button type="submit" name="addCategory" class="button add-button" style="width:100%;">Add</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!--Visible Main-->
+    <div class="dashboard">
+        <div class="content">
+            <h2>Inventory
+                <?php echo " (" . $_SESSION['user']['email'] . " the " . $_SESSION['user']['position'] . ") " ?>
+            </h2>
+
+            <div>
+                <div class="containertab">
+                    <div class="stock-container total-products-container" id="totalProductsContainer">
+                        <h4><i class="fa fa-shopping-cart"></i> Total Inventory Items</h4>
+                        <p>
+                            <?php echo $totalProducts; ?>
+                        </p>
+                    </div>
+
+                    <div class="stock-container low-stock-container" id="lowStockContainer">
+                        <h4><i class="fa fa-exclamation-triangle"></i> Low Stock Items</h4>
+                        <p>
+                            <?php echo !empty($lowStockData) ? $lowStockData[0]['lowStock'] : 0; ?>
+                        </p>
+                    </div>
+
+                    <!-- <div class="stock-container out-of-stock-container" id="outofStockContainer">
+                        <h4><i class="fa fa-ban"></i> Out of Stock</h4>
+                        <p>
+                            // echo !empty($outOfStockData) ? $outOfStockData[0]['out_of_stock'] : 0; ?>
+                        </p>
+                    </div> -->
+
+                    <div class="stock-container most-stock-container" id="mostStockContainer">
+                        <h4><i class="fa fa-check-circle"></i> Most Stock</h4>
+                        <p>
+                            <?php echo !empty($mostStockData) ? $mostStockData[0]['most_stock'] : 0; ?>
+                        </p>
+                    </div>
+                </div>
                 <br>
-                <button type="submit" name="submit_update_all" id="applyUpdateButton" class="button add-button" style="width:100%;">Apply Update</button>
-                <br><br>
-            </form>
-        </div>
-    </div>
-</div>
+                <div style="display: flex; justify-content: space-between;">
+                    <button type="button" class="button add-button" id="addForm">+ Add
+                        Inventory</button>
 
-<!--hidden inventory category form-->
-<div class="overlay" id="inventoryCategory">
-    <div class="overlay-content">
-        <div class="info-box">
-            <button id="closeCategoryForm" class="button delete-button">X</button>
-            <h2>Inventory Categories</h2>
-            <div class="form-group">
-                <table style="margin: auto;">
-                    <?php foreach ($categoryInventoryData as $category) : ?>
-                        <tr>
-
-                            <td>
-                                <?= $category['inventory_category'] ?>
-                            </td>
-                            <td>
-                                <form method="post" action="/admin_dashboard/inventory" onsubmit="return confirm('Are you sure you want to delete this category?');">
-                                    <input type="hidden" name="update_category_id" value="<?= $category['categoryInventory_id'] ?>">
-                                    <button type="button" class="button edit-button" onclick="toggleEditCategoryForm('editCategory<?= $category['categoryInventory_id'] ?>')">✎</button>
-                                    <input type="hidden" name="delete_category_id" value="<?= $category['categoryInventory_id'] ?>">
-                                    <button type="submit" name="categoryDelete" class="button delete-button">✖</button>
-                                </form>
-                            </td>
-                        </tr>
-                        <tr class="edit-form" id="editCategory<?= $category['categoryInventory_id'] ?>">
-                            <td colspan="2">
-                                <form method="post" action="" onsubmit="return confirm('Are you sure you want to change this category?');">
-                                    <input type="hidden" name="update_category_id" value="<?= $category['categoryInventory_id'] ?>">
-                                    <input type="text" name="update_inventoryCategory" value="<?= $category['inventory_category'] ?>" required>
-                                    <button type="submit" name="update_category" class="button edit-button">💾</button>
-                                </form>
-                            </td>
-
-                        </tr>
-                    <?php endforeach; ?>
-                </table>
-            </div>
-            <h2>Add New Category</h2>
-            <form method="post" action="/admin_dashboard/inventory" onsubmit="return confirm('Are you sure you want to add this category?');">
-                <div class="form-group">
-                    <label for="new_category">Inventory Item:</label>
-                    <input type="text" class="form-control" name="new_category" placeholder="Category Name" required>
-                </div>
-                <button type="submit" name="addCategory" class="button add-button" style="width:100%;">Add</button>
-            </form>
-        </div>
-    </div>
-</div>
-
-
-<!--Visible Main-->
-<div class="dashboard">
-    <div class="content">
-        <h2>Inventory
-            <?php echo " (" . $_SESSION['user']['email'] . " the " . $_SESSION['user']['position'] . ") " ?>
-        </h2>
-
-        <div>
-            <div class="containertab">
-                <div class="stock-container total-products-container">
-                    <h4><i class="fa fa-shopping-cart"></i> Total Products</h4>
-                    <p>
-                        <?php echo $totalProducts; ?>
-                    </p>
-                </div>
-                <div class="stock-container low-stock-container">
-                    <h4><i class="fa fa-exclamation-triangle"></i> Low Stock</h4>
-                    <p>
-                        <?php echo !empty($lowStockData) ? $lowStockData[0]['lowStock'] : 0; ?>
-                    </p>
-                </div>
-
-                <div class="stock-container out-of-stock-container">
-                    <h4><i class="fa fa-ban"></i> Out of Stock</h4>
-                    <p>
-                        <?php echo !empty($outOfStockData) ? $outOfStockData[0]['out_of_stock'] : 0; ?>
-                    </p>
-                </div>
-                <div class="stock-container most-stock-container">
-                    <h4><i class="fa fa-check-circle"></i> Most Stock</h4>
-                    <p>
-                        <?php echo !empty($mostStockData) ? $mostStockData[0]['most_stock'] : 0; ?>
-                    </p>
-                </div>
-            </div>
-            <br>
-            <div style="display: flex; justify-content: space-between;">
-                <button type="button" class="button add-button" id="addForm">+ Add
-                    Inventory</button>
-
-                <button type="button" class="button edit-button" id="addInventoryBtn">+ Add Supply</button>
-                <button type="button" class="button delete-button" id="filePilferageBtn" style="margin-left: auto;">🗑️ File Pilferage</button>
-                <!-- <button type="button" class="button add-button" id="updateInventoryBtn" style="margin-left: auto;">Update All
+                    <button type="button" class="button edit-button" id="addInventoryBtn">+ Add Supply</button>
+                    <button type="button" class="button delete-button" id="filePilferageBtn" style="margin-left: auto;">🗑️ File Pilferage</button>
+                    <!-- <button type="button" class="button add-button" id="updateInventoryBtn" style="margin-left: auto;">Update All
                     Inventory</button> -->
-            </div>
-            <br>
-            <div class="table-responsive">
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Inventory Item</th>
-                            <th>Item Type
-                                <button type="button" id="categoryInventory" style="background-color:transparent; border:none; padding:none;">⚙️</button>
-                            </th>
-                            <th>Quantity</th>
-                            <th>Unit</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($inventoryData as $item) : ?>
+                </div>
+                <br>
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
                             <tr>
-                                <td>
-                                    <?= $item['inventory_item'] ?>
-                                </td>
-                                <td>
-                                    <?= $item['item_type'] ?>
-                                </td>
-                                <td>
-                                    <?= $item['quantity'] ?>
-                                </td>
-                                <td>
-                                    <?= $item['unit'] ?>
-                                </td>
+                                <th>Inventory Item</th>
+                                <th>Item Type
+                                    <button type="button" id="categoryInventory" style="background-color:transparent; border:none; padding:none;">⚙️</button>
+                                </th>
+                                <th>Quantity</th>
+                                <th>Unit</th>
+                                <th>Re-Order Point</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($inventoryData as $item) : ?>
+                                <tr>
+                                    <td>
+                                        <?= $item['inventory_item'] ?>
+                                    </td>
+                                    <td>
+                                        <?= $item['item_type'] ?>
+                                    </td>
+                                    <td>
+                                        <?= $item['quantity'] ?>
+                                    </td>
+                                    <td>
+                                        <?= $item['unit'] ?>
+                                    </td>
+                                    <td>
+                                        <?= $item['reorder_point'] ?>
+                                    </td>
+                                    <td>
+                                        <?= $item['status'] ?>
+                                    </td>
 
-                                <td class="action-buttons">
-                                    <form method="post" action="/admin_dashboard/inventory" class="button-form" onsubmit="return confirmDelete()">
-                                        <input type="hidden" name="edit_item_id" value="<?= $item['inventory_id'] ?>">
-                                        <button type="button" class="button edit-button" onclick="toggleEditForm('editForm<?= $item['inventory_id'] ?>')">✎</button>
-                                        <input type="hidden" name="delete_item_id" value="<?= $item['inventory_id'] ?>">
-                                        <button type="submit" name="submit_delete" class="button delete-button">✖</button>
-                                    </form>
-                                </td>
-                            </tr>
-                            <tr class="edit-form" id="editForm<?= $item['inventory_id'] ?>">
-                                <td colspan="7">
-                                    <form method="post" action="/admin_dashboard/inventory" onsubmit="return confirmEdit()">
-                                        <input type="hidden" name="edit_item_id" value="<?= $item['inventory_id'] ?>">
-                                        <input type="text" name="edited_item" placeholder="Edit Item" value="<?= $item['inventory_item'] ?>" required>
-                                        <select name="edited_type" id="edited_type" required>
-                                            <?php foreach ($categoryInventoryData as $category) : ?>
-                                                <option value="<?= $category['inventory_category'] ?>" <?php echo ($item['item_type'] == $category['inventory_category']) ? 'selected' : ''; ?>>
-                                                    <?= $category['inventory_category'] ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                        <input type="number" name="edited_quantity" placeholder="Edit Quantity" value="<?= $item['quantity'] ?>" disabled>
-                                        <input type="text" name="edited_unit" placeholder="Unit measurement" value="<?= $item['unit'] ?>" required>
-                                        <button type="submit" name="submit_edit" class="button edit-button">💾</button>
-                                    </form>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+                                    <td class="action-buttons">
+                                        <form method="post" action="/admin_dashboard/inventory" class="button-form" onsubmit="return confirmDelete()">
+                                            <input type="hidden" name="edit_item_id" value="<?= $item['inventory_id'] ?>">
+                                            <button type="button" class="button edit-button" onclick="toggleEditForm('editForm<?= $item['inventory_id'] ?>')">✎</button>
+                                            <input type="hidden" name="delete_item_id" value="<?= $item['inventory_id'] ?>">
+                                            <button type="submit" name="submit_delete" class="button delete-button">✖</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                <tr class="edit-form" id="editForm<?= $item['inventory_id'] ?>">
+                                    <td colspan="7">
+                                        <form method="post" action="/admin_dashboard/inventory" onsubmit="return confirmEdit()">
+                                            <input type="hidden" name="edit_item_id" value="<?= $item['inventory_id'] ?>">
+                                            <input type="text" name="edited_item" placeholder="Edit Item" value="<?= $item['inventory_item'] ?>" required>
+                                            <select name="edited_type" id="edited_type" required>
+                                                <?php foreach ($categoryInventoryData as $category) : ?>
+                                                    <option value="<?= $category['inventory_category'] ?>" <?php echo ($item['item_type'] == $category['inventory_category']) ? 'selected' : ''; ?>>
+                                                        <?= $category['inventory_category'] ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                            <!-- <input type="number" name="edited_quantity" placeholder="Edit Quantity" value="// $item['quantity'] " disabled> -->
+                                            <input type="text" name="edited_unit" placeholder="Unit measurement" value="<?= $item['unit'] ?>" required>
+                                            <input type="text" name="edited_reorder_point" placeholder="Reorder Point" value="<?= $item['reorder_point'] ?>" required>
+                                            <button type="submit" name="submit_edit" class="button edit-button">💾</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
-</div>
-
 </body>
 
 </html>

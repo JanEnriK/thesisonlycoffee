@@ -18,6 +18,15 @@ $productsData = $statement->fetchAll(PDO::FETCH_ASSOC);
 function recalculateStatus($pdo, $productsData)
 {
     calculateSKU($pdo, $productsData);
+
+    // Fetch data from tblinventory
+    $sql = "SELECT * FROM tblinventory";
+    $statement = $pdo->prepare($sql);
+    $statement->execute();
+    $inventoryData = $statement->fetchAll(PDO::FETCH_ASSOC);
+
+    updateInventoryStatus($pdo, $inventoryData);
+
     foreach ($productsData as $productRow) {
         $sql = "SELECT *
         FROM
@@ -103,7 +112,28 @@ function calculateSKU($pdo, $productsData)
     }
 }
 
+// Fetch data from tblinventory
+$sql = "SELECT * FROM tblinventory";
+$statement = $pdo->prepare($sql);
+$statement->execute();
+$inventoryData = $statement->fetchAll(PDO::FETCH_ASSOC);
 
+function updateInventoryStatus($pdo, $inventoryData)
+{
+    foreach ($inventoryData as $inventory) {
+        if ($inventory['quantity'] > $inventory['reorder_point']) {
+            $sqlUpdateStatus = "UPDATE tblinventory SET status = 'In Stock' WHERE inventory_id = :inventoryId";
+            $updateStatus = $pdo->prepare($sqlUpdateStatus);
+            $updateStatus->bindParam(':inventoryId', $inventory['inventory_id']);
+            $updateStatus->execute();
+        } else {
+            $sqlUpdateStatus = "UPDATE tblinventory SET status = 'Low Stock' WHERE inventory_id = :inventoryId";
+            $updateStatus = $pdo->prepare($sqlUpdateStatus);
+            $updateStatus->bindParam(':inventoryId', $inventory['inventory_id']);
+            $updateStatus->execute();
+        }
+    }
+}
 
 
 // complete order button 

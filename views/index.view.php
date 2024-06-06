@@ -84,7 +84,6 @@ if (isset($_SESSION['signupSuccess']) && $_SESSION['signupSuccess'] === true) {
             </div>
             <div class="col-lg-4 py-0 py-lg-5">
                 <h1 class="mb-3">Our Vision</h1>
-                <p>Vision Placeholder</p>
                 <h5 class="mb-3"><i class="fa fa-check text-primary mr-3"></i>Serve the Best Tasting Coffee</h5>
                 <h5 class="mb-3"><i class="fa fa-check text-primary mr-3"></i>Home of Caffeine Addict Students</h5>
                 <h5 class="mb-3"><i class="fa fa-check text-primary mr-3"></i>Provide Fast Service</h5>
@@ -97,24 +96,13 @@ if (isset($_SESSION['signupSuccess']) && $_SESSION['signupSuccess'] === true) {
 
 
 <!-- Service Start -->
-<div class="container-fluid pt-5">
+<!-- <div class="container-fluid pt-5">
     <div class="container">
         <div class="section-title">
             <h4 class="text-primary text-uppercase" style="letter-spacing: 5px;">Our Services</h4>
             <h1 class="display-4">Excellence In Every Sip!</h1>
         </div>
         <div class="row">
-            <!-- <div class="col-lg-6 mb-5">
-                <div class="row align-items-center">
-                    <div class="col-sm-5">
-                        <img class="img-fluid mb-3 mb-sm-0" src="img/service-1.jpg" alt="">
-                    </div>
-                    <div class="col-sm-7">
-                        <h4><i class="fa fa-truck service-icon"></i>Fastest Door Delivery</h4>
-                        <p class="m-0">Deliver at your doorstep placeholder</p>
-                    </div>
-                </div>
-            </div> -->
             <div class="col-lg-6 mb-5">
                 <div class="row align-items-center">
                     <div class="col-sm-5">
@@ -137,20 +125,9 @@ if (isset($_SESSION['signupSuccess']) && $_SESSION['signupSuccess'] === true) {
                     </div>
                 </div>
             </div>
-            <!-- <div class="col-lg-6 mb-5">
-                <div class="row align-items-center">
-                    <div class="col-sm-5">
-                        <img class="img-fluid mb-3 mb-sm-0" src="img/service-4.jpg" alt="">
-                    </div>
-                    <div class="col-sm-7">
-                        <h4><i class="fa fa-table service-icon"></i>Online Table Booking</h4>
-                        <p class="m-0">Online Book placeholder</p>
-                    </div>
-                </div>
-            </div> -->
         </div>
     </div>
-</div>
+</div> -->
 <!-- Service End -->
 
 
