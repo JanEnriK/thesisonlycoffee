@@ -30,9 +30,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $editedAddress = $_POST['editAddress'];
         $editedContact = $_POST['editContact'];
         $editedEmail = $_POST['editEmail'];
+        $editedVAT = $_POST['editVAT'];
 
         try {
-            $sqlEdit = "UPDATE tblcoffeeshop SET shopname = :editedShopName, branch = :editedBranch, address = :editedAddress, contact_no = :editedContact, email = :editedEmail WHERE coffeeshopid = :editId";
+            $sqlEdit = "UPDATE tblcoffeeshop SET shopname = :editedShopName, branch = :editedBranch, address = :editedAddress, contact_no = :editedContact, email = :editedEmail, VAT = :editedVAT WHERE coffeeshopid = :editId";
             $statementEdit = $pdo->prepare($sqlEdit);
             $statementEdit->bindParam(':editId', $editId);
             $statementEdit->bindParam(':editedShopName', $editedShopName);
@@ -40,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $statementEdit->bindParam(':editedAddress', $editedAddress);
             $statementEdit->bindParam(':editedContact', $editedContact);
             $statementEdit->bindParam(':editedEmail', $editedEmail);
-
+            $statementEdit->bindParam(':editedVAT', $editedVAT);
             $statementEdit->execute();
 
             //add user log edited coffeeshop information

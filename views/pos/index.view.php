@@ -513,7 +513,7 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
     });
   });
 
-
+  //show the checkout modal
   function showCheckoutModal() {
     console.log(existingProducts); // Debug: Check the contents of existingProducts
     const modal = document.getElementById('checkoutModal');
@@ -551,6 +551,14 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
       console.log('Total:', total);
     });
 
+    // Calculate VAT (assuming 12% VAT)
+    var vatPercentage = <?= $vatPercentage; ?>;
+    const vatAmount = total * (vatPercentage / 100);
+
+    // Add VAT percentage and amount rows
+    const vatRow1 = createVatRow("VAT Percentage", vatPercentage + "%");
+    const vatRow2 = createVatRow("Calculated VAT", `₱${vatAmount.toFixed(2)}`);
+
     // Create a row for the total
     const totalRow = document.createElement('tr');
     const totalNameCell = document.createElement('th');
@@ -559,14 +567,29 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
     const totalValueCell = document.createElement('th');
     totalValueCell.textContent = `₱${total.toFixed(2)}`;
     totalValueCell.setAttribute('id', 'overalltotal'); // Set the ID for styling or other purposes
-    console.log(totalValueCell); // Debug: Check the totalValueCell element
 
     totalRow.appendChild(totalNameCell);
     totalRow.appendChild(totalValueCell);
+    tableFooter.appendChild(vatRow1); // Append the VAT percentage row
+    tableFooter.appendChild(vatRow2); // Append the calculated VAT row
     tableFooter.appendChild(totalRow); // Append the total row to the table body
 
     console.log('Showing checkout modal'); // Debug: Verify the modal is being shown
     $('#checkoutModal').modal('show');
+  }
+
+  // Helper function to create a row with label and value
+  function createVatRow(label, value) {
+    const row = document.createElement('tr');
+    const labelCell = document.createElement('th');
+    labelCell.textContent = label;
+    labelCell.setAttribute('colspan', '3'); // Span across 3 columns
+    const valueCell = document.createElement('th');
+    valueCell.textContent = value;
+    valueCell.setAttribute('id', 'vat' + Math.random().toString()); // Unique ID for each VAT row
+    row.appendChild(labelCell);
+    row.appendChild(valueCell);
+    return row;
   }
   // Get the <span> element that closes the modal
   const span = document.getElementsByClassName("close")[0];

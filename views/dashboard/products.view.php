@@ -160,7 +160,7 @@ $db = App::resolve('Core\Database');
                         <div id="dropdowns-container<?= $products['product_id'] ?>">
                             <table class="tableDefault">
                                 <?php
-                                $sql = "SELECT inventory_item, PI.quantity as ingredientsQuantity, I.quantity as inventoryQuantity 
+                                $sql = "SELECT I.*, inventory_item, PI.quantity as ingredientsQuantity, I.quantity as inventoryQuantity, reorder_point 
                                         FROM tblproducts_inventory PI 
                                         JOIN tblinventory I ON PI.inventory_id = I.inventory_id 
                                         WHERE products_id = $products[product_id]";
@@ -173,7 +173,7 @@ $db = App::resolve('Core\Database');
                                 </tr>
                                 <tr class="tableDefault">
                                     <?php foreach ($currentIngredientsData as $currentIngredients) : ?>
-                                        <?php if ($currentIngredients['inventoryQuantity'] <= 10) : ?>
+                                        <?php if ($currentIngredients['inventoryQuantity'] <= $currentIngredients['reorder_point']) : ?>
                                             <td class="tableDefault" style="background-color: rgba(255, 99, 71, 0.5);">
                                                 <?php echo $currentIngredients['inventory_item']; ?>
                                             </td>
@@ -181,7 +181,7 @@ $db = App::resolve('Core\Database');
                                                 <?php echo $currentIngredients['ingredientsQuantity']; ?>
                                             </td>
                                             <td class="tableDefault" style="background-color: rgba(255, 99, 71, 0.5);">
-                                                <?php echo $currentIngredients['inventoryQuantity']; ?>
+                                                <?php echo $currentIngredients['inventoryQuantity']; ?>/<?php echo $currentIngredients['reorder_point']; ?>(min)
                                             </td>
                                         <?php else : ?>
                                             <td class="tableDefault">
@@ -191,7 +191,7 @@ $db = App::resolve('Core\Database');
                                                 <?php echo $currentIngredients['ingredientsQuantity']; ?>
                                             </td>
                                             <td class="tableDefault">
-                                                <?php echo $currentIngredients['inventoryQuantity']; ?>
+                                                <?php echo $currentIngredients['inventoryQuantity']; ?>/<?php echo $currentIngredients['reorder_point']; ?>(min)
                                             </td>
                                         <?php endif; ?>
                                 </tr>

@@ -17,7 +17,20 @@ GROUP BY o.order_number;
 
 $discount_codes = $db->query("SELECT * from tblpromo WHERE 1")->get();
 
+// New query to fetch VAT percentage
+$vatResult = $db->query("SELECT VAT as VAT from tblcoffeeshop WHERE 1")->find();
+
+// Ensure to check if the result exists and convert the VAT percentage to float
+if ($vatResult === null || empty($vatResult)) {
+   // Handle the case where no VAT percentage is found
+   // This could involve setting a default value or handling an error
+   $vatPercentage = 0; // Defaulting to 0 as an example
+} else {
+   $vatPercentage = (float)$vatResult['VAT']; // Convert to float
+}
+
 view('pos/online_orders.view.php', [
    'online_orders' => $online_orders,
-   'discount_codes' => $discount_codes
+   'discount_codes' => $discount_codes,
+   'vatPercentage' => $vatPercentage
 ]);

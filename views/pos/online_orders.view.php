@@ -322,6 +322,7 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
     // Calculate the new total amount based on the original total amount
     const discountedTotal = originalTotalAmount * (1 - discountValue);
     const deductedAmount = originalTotalAmount - discountedTotal;
+    const vatAmount = <?= $vatPercentage; ?>
 
     // Listen for changes to the payment method radio buttons
     document.getElementById('cashPayment').addEventListener('change', updatePaymentForm);
@@ -337,18 +338,24 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
     const deductedRow = document.createElement('tr');
     deductedRow.className = 'discount-row';
     deductedRow.innerHTML = `
- <td colspan="3" class="text-right"><strong>Discount:</strong></td>
- <td>${deductedAmount.toFixed(2)}</td>
- `;
+    <td colspan="3" class="text-right"><strong>Discount:</strong></td>
+    <td>${deductedAmount.toFixed(2)}</td>`;
     tbody.appendChild(deductedRow);
 
-    const newTotalRow = document.createElement('tr');
-    newTotalRow.className = 'discount-row';
-    newTotalRow.innerHTML = `
- <td colspan="3" class="text-right"><strong>New Total:</strong></td>
- <td id="newTotalAmount">${discountedTotal.toFixed(2)}</td>
- `;
-    tbody.appendChild(newTotalRow);
+    const vatPercentage = document.createElement('tr');
+    vatPercentage.className = 'discount-row';
+    vatPercentage.innerHTML = `
+    <td colspan="3" class="text-right"><strong>VAT Percentage:</strong></td>
+    <td id="newTotalAmount">${vatAmount.toFixed(2)}%</td>`;
+    tbody.appendChild(vatPercentage);
+
+    const calculatedVAT = document.createElement('tr');
+    calculatedVAT.className = 'discount-row';
+    calculatedVAT.innerHTML = `
+      <td colspan="3" class="text-right"><strong>Calculated VAT:</strong></td>
+      <td id="newTotalAmount">${(originalTotalAmount.toFixed(2)*(vatAmount/100)).toFixed(2)}</td>`;
+    tbody.appendChild(calculatedVAT);
+
 
     // Update the total amount in the DOM
     document.getElementById('totalAmount').textContent = discountedTotal.toFixed(2);

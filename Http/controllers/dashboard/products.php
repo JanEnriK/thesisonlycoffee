@@ -27,7 +27,7 @@ function recalculateStatus($pdo, $productsData)
 {
     calculateSKU($pdo, $productsData);
     foreach ($productsData as $productRow) {
-        $sql = "SELECT *
+        $sql = "SELECT PI.*, I.*,P.*, I.quantity as inventoryQuantity
         FROM
         tblproducts_inventory PI
         JOIN
@@ -48,7 +48,15 @@ function recalculateStatus($pdo, $productsData)
             $changeNull->bindParam(':productId', $productRow['product_id']);
             $changeNull->execute();
         } else {
-            if ($productRow['SKU'] > 0) {
+
+            $hasLowStock = false;
+
+            foreach ($productInventoryData as $setIngredients) {
+                if ($setIngredients['inventoryQuantity'] <= $setIngredients['reorder_point']) {
+                    $hasLowStock = true;
+                }
+            }
+            if ($productRow['SKU'] > 0  && $hasLowStock === false) {
                 $sqlChangeAvailable = "UPDATE tblproducts SET status = 'Available' WHERE tblproducts.product_id = :productId;";
                 $changeAvailable = $pdo->prepare($sqlChangeAvailable);
                 $changeAvailable->bindParam(':productId', $productRow['product_id']);
