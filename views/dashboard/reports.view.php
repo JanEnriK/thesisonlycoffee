@@ -103,6 +103,7 @@
                 <th>Item</th>
                 <th>Quantity Change</th>
                 <th>Unit</th>
+                <th>Report Type</th>
                 <th>Note</th>
                 <th>Date Time</th>
               </tr>

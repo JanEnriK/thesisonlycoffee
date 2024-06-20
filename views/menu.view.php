@@ -328,14 +328,15 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
 
 
 <!-- Chatbot section start -->
+
 <div id="overlay"></div>
 
 <div class="container">
-    <div class="position-fixed bottom-0 end-0 p-2">
+    <!-- <div class="position-fixed bottom-0 end-0 p-2">
         <div class="chat-icon bg-primary text-white rounded-circle d-flex justify-content-center align-items-center" id="toggleChat">
             <i class="fas fa-comment-alt"></i>
         </div>
-    </div>
+    </div> -->
     <div class="chat-box bg-light border rounded position-fixed bottom-0 end-0" id="chatBot" style="display: none;">
         <div class="chat-header bg-primary text-white p-2 rounded-top d-flex justify-content-between align-items-center">
             <h4 class="m-0">Order your own coffee here</h4>
@@ -373,10 +374,11 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
             </form>
         </div>
     </div>
-    <!-- Chatbot section end-->
-
-
 </div>
+
+<!-- Chatbot section end-->
+
+
 
 <!-- JavaScript Libraries -->
 <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>

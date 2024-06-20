@@ -191,13 +191,15 @@ if (isset($_POST['finish_order'])) {
         $quantityString = "-" . $deduct['quantity'] * $deductMulti['quantity'];
         $reason = "inventory deduct for preparing " . $deductMulti['quantity'] . " " . $fetchProduct['product_name'];
 
-        // Insert data into tblInventoryReports
-        $sqlInsertReport = "INSERT INTO tblinventoryreport (inventory_item, inventory_id, quantity, unit, reason) VALUES (:inventoryItem, :itemID, :quantityString, :unit, :reason)";
+        // Insert data into tblInventoryReports"
+        $recordType = "Product Preparation Deduct";
+        $sqlInsertReport = "INSERT INTO tblinventoryreport (inventory_item, inventory_id, quantity, unit, record_type, reason) VALUES (:inventoryItem, :itemID, :quantityString, :unit, :record_type, :reason)";
         $statementInsertReport = $pdo->prepare($sqlInsertReport);
         $statementInsertReport->bindParam(':inventoryItem', $fetchInventory['inventory_item']);
         $statementInsertReport->bindParam(':itemID', $deduct['inventory_id']);
         $statementInsertReport->bindParam(':quantityString', $quantityString); // Bind the modified quantity string
         $statementInsertReport->bindParam(':unit', $fetchInventory['unit']); // Bind the unit directly
+        $statementInsertReport->bindParam(':record_type', $recordType);
         $statementInsertReport->bindParam(':reason', $reason);
         $statementInsertReport->execute();
     }

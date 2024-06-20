@@ -284,7 +284,7 @@
         });
     });
 
-    // filing pilferage
+    // filing pilferage(shrinkage)
     document.addEventListener('DOMContentLoaded', function() {
         const filePilferageBtn = document.getElementById('filePilferageBtn');
         const filePilferageOverlay = document.getElementById('filePilferageOverlay');
@@ -727,7 +727,7 @@
                         Inventory</button>
 
                     <button type="button" class="button edit-button" id="addInventoryBtn">+ Add Supply</button>
-                    <button type="button" class="button delete-button" id="filePilferageBtn" style="margin-left: auto;">🗑️ File Pilferage</button>
+                    <button type="button" class="button delete-button" id="filePilferageBtn" style="margin-left: auto;">🗑️ File Shrinkage</button>
                     <!-- <button type="button" class="button add-button" id="updateInventoryBtn" style="margin-left: auto;">Update All
                     Inventory</button> -->
                 </div>

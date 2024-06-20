@@ -127,6 +127,7 @@ function displayInventoryReport(data) {
     row += "<td>" + data[i].inventory_item + "</td>";
     row += "<td>" + data[i].quantity + "</td>";
     row += "<td>" + data[i].unit + "</td>";
+    row += "<td>" + data[i].record_type + "</td>";
     row += "<td>" + data[i].reason + "</td>";
     row += "<td>" + data[i].datetime + "</td>";
     row += "</tr>";

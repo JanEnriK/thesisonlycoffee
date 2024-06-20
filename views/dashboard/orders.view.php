@@ -128,6 +128,57 @@ include "connect.php";
                 </form>
             </div>
 
+            <!--SHOW ORDERS THAT ARE ENDED-->
+            <div>
+                <form method="post" action="/admin_dashboard/orders">
+                    <table class="table table-bordered" id="ordersTable" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th colspan="6" style="background-color: #800000;">
+                                    <h3>Ended Orders</h3>
+                                </th>
+                            </tr>
+                            <tr>
+                                <th>Order Number</th>
+                                <th>Customer User Name</th>
+                                <th>Item</th>
+                                <th>Quantity</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php
+                            $sql_ordersEnded = "SELECT oi.orderitem_id, oi.orderid, oi.productid,e.username, p.product_name, oi.quantity,oi.orderid,oi.status FROM tblorderitem oi JOIN tblproducts p ON oi.productid = p.product_id JOIN tblorders o ON oi.orderid = o.order_number JOIN tblemployees e ON o.customer_id = e.employeeID WHERE oi.status = 'ended' and o.order_status = 'payed' and oi.orderitem_id IN (SELECT orderitem_id from tblorderitem) GROUP BY oi.orderitem_id;
+                            ";
+                            $result_ordersEnded = $conn->query($sql_ordersEnded);
+                            while ($row = $result_ordersEnded->fetch_assoc()) : ?>
+                                <tr>
+                                    <td>
+                                        <?php echo $row['orderid']; ?>
+                                    </td>
+                                    <td>
+                                        <?php echo $row['username']; ?>
+                                    </td>
+                                    <td>
+                                        <?php echo $row['product_name']; ?>
+                                    </td>
+                                    <td>
+                                        <?php echo $row['quantity']; ?>
+                                    </td>
+                                    <td>
+                                        <?php echo $row['status']; ?>
+                                    </td>
+                                    <td>
+                                        <button type="submit" name="unarchive_order" value="<?php echo $row['orderitem_id']; ?>" onclick="return confirm('Are you sure you want to return this order to active?');">Un-archive</button>
+                                    </td>
+                                </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
+                </form>
+            </div>
+
             <!--SHOW ORDERS THAT ARE COMPLETED-->
             <div>
                 <form method="post" action="/admin_dashboard/orders">
@@ -167,56 +218,6 @@ include "connect.php";
                                     </td>
                                     <td>
                                         <?php echo $row['status']; ?>
-                                    </td>
-                                </tr>
-                            <?php endwhile; ?>
-                        </tbody>
-                    </table>
-                </form>
-            </div>
-            <!--SHOW ORDERS THAT ARE ENDED-->
-            <div>
-                <form method="post" action="/admin_dashboard/orders">
-                    <table class="table table-bordered" id="ordersTable" width="100%" cellspacing="0">
-                        <thead>
-                            <tr>
-                                <th colspan="6" style="background-color: #800000;">
-                                    <h3>Archived Orders</h3>
-                                </th>
-                            </tr>
-                            <tr>
-                                <th>Order Number</th>
-                                <th>Customer User Name</th>
-                                <th>Item</th>
-                                <th>Quantity</th>
-                                <th>Status</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php
-                            $sql_ordersEnded = "SELECT oi.orderitem_id, oi.orderid, oi.productid,e.username, p.product_name, oi.quantity,oi.orderid,oi.status FROM tblorderitem oi JOIN tblproducts p ON oi.productid = p.product_id JOIN tblorders o ON oi.orderid = o.order_number JOIN tblemployees e ON o.customer_id = e.employeeID WHERE oi.status = 'ended' and o.order_status = 'payed' and oi.orderitem_id IN (SELECT orderitem_id from tblorderitem) GROUP BY oi.orderitem_id;
-                            ";
-                            $result_ordersEnded = $conn->query($sql_ordersEnded);
-                            while ($row = $result_ordersEnded->fetch_assoc()) : ?>
-                                <tr>
-                                    <td>
-                                        <?php echo $row['orderid']; ?>
-                                    </td>
-                                    <td>
-                                        <?php echo $row['username']; ?>
-                                    </td>
-                                    <td>
-                                        <?php echo $row['product_name']; ?>
-                                    </td>
-                                    <td>
-                                        <?php echo $row['quantity']; ?>
-                                    </td>
-                                    <td>
-                                        <?php echo $row['status']; ?>
-                                    </td>
-                                    <td>
-                                        <button type="submit" name="unarchive_order" value="<?php echo $row['orderitem_id']; ?>" onclick="return confirm('Are you sure you want to return this order to active?');">Un-archive</button>
                                     </td>
                                 </tr>
                             <?php endwhile; ?>

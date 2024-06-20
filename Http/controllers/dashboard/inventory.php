@@ -180,13 +180,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         recalculateStatus($pdo, $productsData);
 
         // Insert data into tblInventoryReports
-        $sqlInsertReport = "INSERT INTO tblinventoryreport (inventory_item, inventory_id, quantity, unit, reason) VALUES (:inventoryItem, :inventory_id, :quantity, :unit, :reason)";
+        $recordType = "Adding Supply";
+        $sqlInsertReport = "INSERT INTO tblinventoryreport (inventory_item, inventory_id, quantity, unit, record_type, reason) VALUES (:inventoryItem, :inventory_id, :quantity, :unit, :record_type, :reason)";
         $statementInsertReport = $pdo->prepare($sqlInsertReport);
         $statementInsertReport->bindParam(':inventoryItem', $inventoryItem);
         $statementInsertReport->bindParam(':inventory_id', $inventoryID);
         $statementInsertReport->bindParam(':quantity', $quantity);
         $statementInsertReport->bindParam(':unit', $unit);
         $statementInsertReport->bindParam(':reason', $reason);
+        $statementInsertReport->bindParam(':record_type', $recordType);
         $statementInsertReport->execute();
 
         // Redirect back to the inventory page after filing pilferage
@@ -228,12 +230,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Insert data into tblInventoryReports
         $datetime = date('Y-m-d H:i:s');
-        $sqlInsertReport = "INSERT INTO tblinventoryreport (inventory_item, inventory_id, quantity, unit, reason) VALUES (:inventoryItem, :itemID, :quantityString, :unit, :reason)";
+        $recordType = "Inventory Shrinkage";
+        $sqlInsertReport = "INSERT INTO tblinventoryreport (inventory_item, inventory_id, quantity, unit, record_type, reason) VALUES (:inventoryItem, :itemID, :quantityString, :unit, :record_type, :reason)";
         $statementInsertReport = $pdo->prepare($sqlInsertReport);
         $statementInsertReport->bindParam(':inventoryItem', $inventoryItem);
         $statementInsertReport->bindParam(':itemID', $itemID);
         $statementInsertReport->bindParam(':quantityString', $quantityString); // Bind the modified quantity string
         $statementInsertReport->bindParam(':unit', $unit); // Bind the unit directly
+        $statementInsertReport->bindParam(':record_type', $recordType);
         $statementInsertReport->bindParam(':reason', $reason);
         $statementInsertReport->execute();
 
@@ -272,12 +276,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         //add a record for initial supply of a new inventory
         $reason = "New Inventory initial supply for " . $newItem;
-        $sqlInsertReport = "INSERT INTO tblinventoryreport (inventory_item, inventory_id, quantity, unit, reason) VALUES (:inventoryItem, :itemID, :quantityString, :unit, :reason)";
+        $recordType = "Initial Supply";
+        $sqlInsertReport = "INSERT INTO tblinventoryreport (inventory_item, inventory_id, quantity, unit, record_type,reason) VALUES (:inventoryItem, :itemID, :quantityString, :unit, :record_type, :reason)";
         $statementInsertReport = $pdo->prepare($sqlInsertReport);
         $statementInsertReport->bindParam(':inventoryItem', $newItem);
         $statementInsertReport->bindParam(':itemID', $lastInventoryID);
         $statementInsertReport->bindParam(':quantityString', $newQuantity); // Bind the modified quantity string
         $statementInsertReport->bindParam(':unit', $newUnit); // Bind the unit directly
+        $statementInsertReport->bindParam(':record_type', $recordType);
         $statementInsertReport->bindParam(':reason', $reason);
         $statementInsertReport->execute();
 
