@@ -3,6 +3,10 @@
 <link href="css/chathead.css" rel="stylesheet">
 <link href="css/table.css" rel="stylesheet">
 <?php
+if (isset($_SESSION['payment_errors'])) {
+    echo "<script>alert('" . htmlspecialchars($_SESSION['alert_message']) . "');</script>";
+    unset($_SESSION['alert_message']); // Clear the message after displaying it
+}
 //alert if the item has reached max stocks to be ordered
 if (isset($_SESSION['alert_message'])) {
     echo "<script>alert('" . htmlspecialchars($_SESSION['alert_message']) . "');</script>";
@@ -147,11 +151,6 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
 <div class="container-fluid page-header mb-5 position-relative overlay-bottom">
     <div class="d-flex flex-column align-items-center justify-content-center pt-0 pt-lg-5" style="min-height: 400px">
         <h1 class="display-4 mb-3 mt-0 mt-lg-5 text-white text-uppercase">Menu</h1>
-        <div class="d-inline-flex mb-lg-5">
-            <p class="m-0 text-white"><a class="text-white" href="">Home</a></p>
-            <p class="m-0 text-white px-2">/</p>
-            <p class="m-0 text-white">Menu</p>
-        </div>
     </div>
 </div>
 <!-- Page Header End -->
@@ -254,10 +253,13 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
     <div class="position-fixed bottom-0 right-0 m-3 cart bg-light border rounded w-50 h-75" id="cart" style="display: none;">
         <div class="cart-header bg-primary text-white p-2 rounded-top d-flex justify-content-between align-items-center">
             <h4 class="m-0">Your Cart</h4>
-            <button class="close-btn btn btn-sm btn-light" id="closeCart">&times;</button>
+            <div class="ml-auto d-flex align-items-center">
+                <button class="close-btn btn btn-sm btn-light" id="orderHistory"><i class="fas fa-history"></i></button>
+                <button class="close-btn btn btn-sm btn-light ml-2" id="closeCart">&times;</button>
+            </div>
         </div>
         <div class="cart-body p-3 w-30 h-75">
-            <form action="/store_cart" method="POST">
+            <form>
                 <table>
                     <thead>
                         <tr>
@@ -315,13 +317,106 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
                             <?php if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) : ?>
                                 <tr>
                                     <td colspan="4">
-                                        <button type="submit" class="btn btn-primary btn-block">Checkout</button>
+                                        <button type="button" class="btn btn-primary btn-block" id="checkoutBtn">Checkout</button>
                                     </td> <!-- Checkout button -->
                                 </tr>
                             <?php endif; ?>
                     </tbody>
                 </table>
             </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- Order History Modal -->
+<div id="orderHistoryModal" class="modal fade">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Order History</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Content will be populated dynamically -->
+                <div id="orderHistoryContent"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Checkout Modal -->
+<div class="modal fade" id="checkoutModal" tabindex="-1" role="dialog" aria-labelledby="checkoutModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="checkoutModalLabel">Checkout</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="content2">
+                <form action="/store_cart" enctype="multipart/form-data" method="POST" id="checkoutForm">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="checkoutTableBody">
+
+                        </tbody>
+                        <tfoot>
+                        </tfoot>
+                    </table>
+                    <div id="payment_details">
+                        <h5 class="modal-title" id="checkoutModalLabel">Discounts</h5>
+                        <input type="hidden" name="orderNumberDisplay" id="orderNumberDisplay" value="<?= $newOrder ?>">
+
+                        <label for="discount_code">Discount: </label>
+                        <input type="text" class="form-control" id="discount_code" name="discount_code" placeholder="Enter discount code:">
+                        <div id="discount_error">
+                            <!-- error message displays here -->
+                        </div>
+                        <button type="button" id="discountBtn" onclick="validateDiscountCode()">Apply discount</button>
+
+                        <h5 class="modal-title" id="checkoutModalLabel">Payment Method</h5>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="paymentMethod" id="cashPayment" value="cash" checked>
+                            <label class="form-check-label" for="cashPayment">
+                                Cash
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="paymentMethod" id="onlinePayment" value="online">
+                            <label class="form-check-label" for="onlinePayment">
+                                Online Payment
+                            </label>
+                        </div>
+                        <!-- <div id="cashInput" class="mt-2">
+                            <label for="cashAmount">Cash Amount:</label>
+                            <input type="number" class="form-control" id="cashAmount" min="1" placeholder="Enter cash amount" required>
+                            <div id="changeDue" class="mt-2"></div>
+                        </div> -->
+                        <div id="proofOfPaymentInput" class="mt-2" style="display: none;">
+                            <label for="proofOfPayment">Reference Number:</label>
+                            <input type="file" class="form-control" name="proofOfPayment" id="proofOfPayment" placeholder="Upload Prood of Payment" accept="image/jpeg,image/png,image/gif" required>
+                            <?php if (isset($errors)) : ?>
+                                <p><?= $errors ?></p>
+                            <?php endif; ?>
+                        </div>
+                        <div class="mt-2">
+                            <button type="submit" id="transactButton" class="btn btn-success btn-block" onclick="return confirm('Are you sure you want to proceed with this transaction?');">Pay Now</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+            </div>
         </div>
     </div>
 </div>
@@ -390,6 +485,9 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
 <script src="lib/tempusdominus/js/moment-timezone.min.js"></script>
 <script src="lib/tempusdominus/js/tempusdominus-bootstrap-4.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js" defer></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.9.1/font/bootstrap-icons.min.css">
+
 
 <!-- Template Javascript -->
 <?php require "js/main.php"; ?>
@@ -399,6 +497,238 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
 <script src="mail/contact.js"></script>
 
 <script>
+    //download Specific card as image
+    function downloadIMG(orderNumber) {
+        var divId = 'card_' + orderNumber;
+        var element = document.getElementById(divId);
+
+        // Temporarily remove buttons from the DOM
+        var buttons = element.querySelectorAll('button');
+        var buttonParents = []; // Store parent elements to re-append buttons later
+        buttons.forEach(function(btn, index) {
+            buttonParents[index] = btn.parentNode;
+            btn.parentNode.removeChild(btn);
+        });
+
+        html2canvas(element, {
+            onrendered: function(canvas) {
+                var link = document.createElement('a');
+                link.download = 'order_' + orderNumber + '.jpg'; // Specify the file extension as.jpg
+                link.href = canvas.toDataURL("image/jpeg", 0.9); // Convert to JPEG with 90% quality
+                link.click();
+                console.log(canvas);
+
+                // Re-append buttons to their original locations
+                buttons.forEach(function(btn, index) {
+                    buttonParents[index].appendChild(btn);
+                });
+            },
+            useCORS: true,
+            logging: true, // Optional: Enable logging for debugging
+        });
+    }
+
+    //Open Orderhistory Modal
+    document.getElementById('orderHistory').addEventListener('click', function() {
+        // Close the cart modal
+        document.getElementById('cart').style.display = 'none';
+        var cartBlub = document.getElementById('cartHead');
+        cartBlub.style.zIndex = 1040;
+
+        // Open the order history modal
+        $('#orderHistoryModal').modal('show');
+        // Fetch order history from the server and populate #orderHistoryContent
+        fetchOrderHistory();
+    });
+
+    function fetchOrderHistory() {
+        fetch('fetch_history.php')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                let html = data.map(order => `
+                <div class="col-md-12">
+                    <div class="card mb-3 rounded">
+                        <div class="card-body bg-white" id="card_${order.order_number}">
+                            <span class="d-flex justify-content-between">
+                            <h5 class="card-title pl-lg-2">Order Number: ${order.order_number}</h5>
+                            <h5 class="card-title pl-lg-2 pr-lg-2"># of Items: ${order.record_count}</h5></span>
+                            <div id="items_${order.order_number}" style="display:none;"></div>
+                            <button type="button" id="btn_${order.order_number}" class="btn btn-primary btn-block" onclick="expandView(${order.order_number})">Expand View</button>
+                            <!-- Add more details as per your data structure -->
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+                document.getElementById('orderHistoryContent').innerHTML = `<div class="row">${html}</div>`;
+            })
+            .catch(error => {
+                console.error('Error fetching order history:', error);
+            });
+    }
+
+    //Expand view of a order history card
+    function expandView(orderNumber) {
+        const toggleButton = document.querySelector(`#btn_${orderNumber}`);
+        const orderDetailsContainer = document.getElementById(`items_${orderNumber}`);
+
+        if (toggleButton.textContent === 'Expand View') {
+            // Expand view
+            toggleButton.textContent = 'Contract';
+            orderDetailsContainer.style.display = 'block'; // Show the content
+            let url = `fetch_order_details.php?orderNumber=${orderNumber}`;
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (Array.isArray(data) && data.length > 0) {
+                        let overallTotal = data.reduce((acc, item) => acc + (parseFloat(item.quantity) * parseFloat(item.price)), 0);
+                        overallTotal = overallTotal.toFixed(2);
+
+                        // Calculate total discount and VAT for the entire order
+                        let totalDiscount = data.reduce((acc, item) => item.discount * 100, 0);
+                        let vatPercentage = data.reduce((acc, item) => item.VAT, 0);
+                        let totalVAT = data.reduce((acc, item) => (item.VAT / 100) * overallTotal, 0);
+                        overallTotal = overallTotal - (overallTotal * (totalDiscount / 100));
+
+                        // Assuming status and order_datetime are properties of the first item for demonstration
+                        let status = data[0].order_status;
+                        if (status == "pending") {
+                            status = "Pending online payment approval...";
+                        } else if (status == "notpayed") {
+                            status = "Pay at the store cashier.";
+                        } else {
+                            status = "Payed.";
+                        }
+                        let orderDate = new Date(data[0].order_datetime);
+                        const options = {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: 'numeric',
+                            hour12: true
+                        };
+                        orderDate = orderDate.toLocaleString('en-US', options);
+                        // Generate table rows
+                        let details = `<table class="table table-sm table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Items</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Total Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.map(item => `
+                            <tr>
+                                <td>${item.product_name}</td>
+                                <td>₱ ${parseFloat(item.price).toFixed(2)}</td>
+                                <td>${item.quantity}</td>
+                                <td>₱ ${(parseFloat(item.quantity) * parseFloat(item.price)).toFixed(2)}</td>
+                            </tr>`).join('')}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="3" style="text-align:right;"> Discount: </th>
+                                <td>${totalDiscount}%</td>
+                            </tr>
+                            <tr>
+                                <th colspan="3" style="text-align:right;"> VAT Percentage: </th>
+                                <td>${vatPercentage}%</td>
+                            </tr>
+                            <tr>
+                                <th colspan="3" style="text-align:right;"> Calculated VAT: </th>
+                                <td>₱ ${totalVAT.toFixed(2)}</td>
+                            </tr>
+                            <tr>
+                                <th colspan="3" style="text-align:right;">Grand Total: </th>
+                                <td>₱ ${overallTotal}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                    <h6><b>Status:</b> ${status}</h6>
+                    <h6><b>Order Date:</b> ${orderDate}</h6>
+                    <button type="button" class="btn btn-secondary mb-2 ml-auto d-flex" onclick="downloadIMG(${orderNumber})"><i class="bi bi-download"></i></button>`;
+                        orderDetailsContainer.innerHTML = details;
+                    } else {
+                        console.error('No order details found');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching order details:', error);
+                });
+        } else {
+            // Contract view
+            toggleButton.textContent = 'Expand View';
+            orderDetailsContainer.style.display = 'none'; // Hide the content
+        }
+    }
+
+
+    //validate discount code entered
+    function validateDiscountCode() {
+        var discountCode = document.getElementById('discount_code').value.trim();
+        var discountButton = document.getElementById('discountBtn');
+        var discountInput = document.getElementById('discount_code');
+        if (!discountCode) {
+            document.getElementById('discount_error').innerText = 'Please enter a discount code.';
+            return; // Exit if the input is empty
+        }
+
+        fetch('/validate_discount.php?code=' + encodeURIComponent(discountCode))
+            .then(response => response.json())
+            .then(data => {
+                if (data.valid) {
+                    document.getElementById('discount_error').innerText = 'Valid Discount Code: ' + (data.value * 100) + '%';
+                    // Apply the discount to the total
+                    applyDiscount(data.value);
+                    discountButton.disabled = true;
+                    discountButton.style = "cursor:not-allowed; background-color: #ccc; color: #666;";
+                    discountInput.disabled = true;
+                } else {
+                    document.getElementById('discount_error').innerText = data.message;
+                }
+            })
+            .catch(error => console.error('Error validating discount code:', error));
+    }
+
+    function applyDiscount(discountPercentage) {
+        var currentTotalElement = document.getElementById('overalltotal'); // Assuming 'total_order' is the ID of an element displaying the current total
+        var currentTotal = parseFloat(currentTotalElement.textContent.replace(/[^0-9.]+/g, '')); // Strip non-numeric characters and convert to float
+        var deductedAmount = currentTotal * discountPercentage; // Ensure discountPercentage is treated as a percentage
+        var discountedTotal = currentTotal - deductedAmount;
+        currentTotalElement.textContent = discountedTotal.toFixed(2);
+
+        // Select the discount deducted cell
+        var tbody = document.getElementById('checkoutTableBody');
+        var trElements = tbody.querySelectorAll('tr');
+        var fourthToLastIndex = trElements.length - 4;
+
+        if (fourthToLastIndex >= 0) {
+            var fourthToLastTr = trElements[fourthToLastIndex];
+            var secondTd = fourthToLastTr.querySelectorAll('td')[1];
+
+            // Update the secondTd content with the deducted amount, prefixed with a "-" sign
+            secondTd.textContent = '-' + deductedAmount.toFixed(2); // Format deductedAmount as a string with "-" sign and 2 decimal places
+        } else {
+            console.log('Not enough rows to find the fourth-to-last row.');
+        }
+    }
+
+
+
     document.addEventListener('DOMContentLoaded', function() {
         const categoryCheckboxes = document.querySelectorAll('.category-btn-checkbox');
         const baseCoffeeContainer = document.getElementById('base-coffee');
@@ -506,7 +836,159 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
 
         });
 
+
+        // Event listener for checkout button
+        document.getElementById('checkoutBtn').addEventListener('click', function() {
+            // Check stock levels before proceeding
+            fetch('check_stock_levels.php')
+                .then(response => response.json())
+                .then(proceed => {
+                    if (proceed) {
+                        // Show the checkout modal
+                        $('#checkoutModal').modal('show');
+
+                        var discountBtn = document.getElementById('discountBtn');
+                        var discountCodeInput = document.getElementById('discount_code');
+                        var cartBlub = document.getElementById('cartHead');
+
+                        discountBtn.disabled = false;
+                        discountCodeInput.disabled = false;
+                        discountBtn.style.cursor = "pointer";
+                        discountBtn.style.backgroundColor = "#04AA6D";
+                        discountBtn.style.color = "#ffffff";
+                        cartBlub.style.zIndex = 1040;
+
+                        // Hide the cart modal
+                        document.getElementById('cart').style.display = 'none';
+
+                        // Optionally, if there's an overlay that needs to be hidden as well, you can hide it too
+                        document.getElementById('overlay').style.display = 'none';
+
+                        var tableBody = document.getElementById('checkoutTableBody');
+                        tableBody.innerHTML = ''; // Clear existing content
+
+                        // Fetch the updated cart items from the server
+                        fetch('get_cart_items.php')
+                            .then(response => response.json())
+                            .then(cartItems => {
+                                let total = 0;
+
+                                // Assuming cartItems is correctly populated from PHP and includes price
+                                Object.keys(cartItems).forEach(function(key) {
+                                    var item = cartItems[key];
+                                    var prod = {
+                                        product_name: item.base_coffee,
+                                        price: parseFloat(item.price), // Ensure price is treated as a number
+                                        quantity: parseInt(item.quantity) // Ensure quantity is treated as a number
+                                    };
+
+                                    var row = document.createElement('tr');
+
+                                    var nameCell = document.createElement('td');
+                                    nameCell.textContent = prod.product_name;
+                                    row.appendChild(nameCell);
+
+                                    var priceCell = document.createElement('td');
+                                    priceCell.textContent = prod.price.toFixed(2); // Use price from the prepared data
+                                    row.appendChild(priceCell);
+
+                                    var quantityCell = document.createElement('td');
+                                    quantityCell.textContent = prod.quantity;
+                                    row.appendChild(quantityCell);
+
+                                    var totalCell = document.createElement('td');
+                                    totalCell.textContent = (prod.price * prod.quantity).toFixed(2); // Calculate total for the row
+                                    row.appendChild(totalCell);
+
+                                    tableBody.appendChild(row);
+                                    total += prod.price * prod.quantity;
+                                });
+
+                                console.log('Total:', total);
+
+                                // Calculate VAT 
+                                var vatPercentage = <?= $vatPercentage; ?>;
+                                const vatAmount = total * (vatPercentage / 100);
+
+                                // Add VAT percentage and amount rows
+                                const vatRow0 = createVatRow("Discount:", "- 0");
+                                const vatRow1 = createVatRow("VAT Percentage:", vatPercentage + "%");
+                                const vatRow2 = createVatRow("Calculated VAT:", `₱${vatAmount.toFixed(2)}`);
+
+                                // Create a row for the total
+                                const totalRow = document.createElement('tr');
+                                const totalNameCell = document.createElement('td');
+                                totalNameCell.textContent = 'Total:';
+                                totalNameCell.setAttribute('colspan', '3'); // Span across 3 columns
+                                totalNameCell.style.textAlign = "right";
+                                totalNameCell.style.fontWeight = "bold";
+                                const totalValueCell = document.createElement('td');
+                                totalValueCell.textContent = `₱${total.toFixed(2)}`;
+                                totalValueCell.setAttribute('id', 'overalltotal'); // Set the ID for styling or other purposes
+
+                                totalRow.appendChild(totalNameCell);
+                                totalRow.appendChild(totalValueCell);
+                                tableBody.appendChild(vatRow0);
+                                tableBody.appendChild(vatRow1); // Append the VAT percentage row
+                                tableBody.appendChild(vatRow2); // Append the calculated VAT row
+                                tableBody.appendChild(totalRow); // Append the total row to the table body
+
+                                function createVatRow(label, value) {
+                                    const row = document.createElement('tr');
+                                    const labelCell = document.createElement('td');
+                                    labelCell.textContent = label;
+                                    labelCell.setAttribute('colspan', '3'); // Span across 3 columns
+                                    labelCell.style.textAlign = 'right';
+                                    labelCell.style.fontWeight = 'bold';
+                                    const valueCell = document.createElement('td');
+                                    valueCell.textContent = value;
+                                    row.appendChild(labelCell);
+                                    row.appendChild(valueCell);
+                                    return row;
+                                }
+                            })
+                            .catch(error => console.error('Error fetching cart items:', error));
+                    } else {
+                        alert('Transaction cannot proceed because an item in the cart is not available. Please try again');
+                        location.reload();
+                    }
+                })
+                .catch(error => console.error('Error checking stock levels:', error));
+        });
+
+
+
+
+
+
     });
+
+    // Function to toggle the visibility and disabled state of the proof of payment input
+    function toggleProofOfPaymentInput() {
+        var paymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
+        var proofOfPaymentInput = document.getElementById('proofOfPaymentInput');
+        var proofOfFileInput = document.getElementById('proofOfPayment');
+        var buttonText = document.getElementById('transactButton');
+
+        if (paymentMethod.value === 'online') {
+            proofOfPaymentInput.style.display = 'block'; // Show the input when Online Payment is selected
+            proofOfFileInput.disabled = false; // Enable the input
+            buttonText.textContent = "Pay Now";
+        } else {
+            proofOfPaymentInput.style.display = 'none'; // Hide the input when Cash Payment is selected
+            proofOfFileInput.disabled = true; // Disable the input
+            buttonText.textContent = "Pay on Counter";
+        }
+    }
+
+    // Attach the toggleProofOfPaymentInput function to changes on the payment method radio buttons
+    document.getElementById('cashPayment').addEventListener('change', toggleProofOfPaymentInput);
+    document.getElementById('onlinePayment').addEventListener('change', toggleProofOfPaymentInput);
+
+    // Initial call to set the correct state on page load
+    toggleProofOfPaymentInput();
+
+
 
     document.querySelectorAll('.remove-item-btn').forEach(button => {
         button.addEventListener('click', function() {

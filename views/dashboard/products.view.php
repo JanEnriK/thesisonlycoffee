@@ -38,7 +38,7 @@ $db = App::resolve('Core\Database');
 
                 <div class="form-group">
                     <label for="fileToUpload">Image: </label>
-                    <input type="file" name="fileToUpload" id="fileToUpload" required>
+                    <input type="file" name="fileToUpload" id="fileToUpload" accept="image/jpeg,image/png,image/gif" required>
                 </div>
 
                 <div class="form-group">
@@ -456,7 +456,7 @@ $db = App::resolve('Core\Database');
                                     </select>
 
 
-                                    <input type="file" name="edited_image" id="edited_image" required>
+                                    <input type="file" name="edited_image" id="edited_image" accept="image/jpeg,image/png,image/gif" required>
 
                                     <button type="submit" name="submit_edit" class="button edit-button">💾</button>
                                 </form>

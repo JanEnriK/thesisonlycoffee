@@ -6,6 +6,7 @@ $router->get('/service', 'service.php');
 $router->get('/menu', 'menu/menu.php');
 $router->post('/menu', 'menu/store.php')->only('auth');
 $router->post('/store_cart', 'menu/store_cart.php')->only('auth');
+$router->post('/check_discount', 'menu/check_discount.php')->only('auth');
 $router->post('/remove_cart', 'menu/remove_cart.php')->only('auth');
 $router->post('/update_cart', 'menu/update_cart.php')->only('auth');
 $router->get('/get_products', 'get_products.php');
