@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 17, 2024 at 04:45 PM
+-- Generation Time: Jun 06, 2024 at 03:44 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -211,26 +211,29 @@ CREATE TABLE `tblinventory` (
   `inventory_item` varchar(255) NOT NULL,
   `item_type` varchar(255) NOT NULL,
   `quantity` float DEFAULT NULL,
-  `unit` varchar(10) DEFAULT NULL
+  `unit` varchar(10) DEFAULT NULL,
+  `reorder_point` float DEFAULT NULL,
+  `status` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tblinventory`
 --
 
-INSERT INTO `tblinventory` (`inventory_id`, `inventory_item`, `item_type`, `quantity`, `unit`) VALUES
-(3, 'Powdered Sugar', 'Sweetener', 2000, 'grams'),
-(4, 'Arrabica Coffee Bean', 'Coffee Bean', 4990, 'grams'),
-(5, 'Liberica Coffee Bean', 'Coffee Bean', 490, 'grams'),
-(6, 'Oat Milk', 'Milk', 1000, 'ml'),
-(7, 'Soy Milk', 'Milk', 985, 'ml'),
-(8, 'Pearls', 'Sinker', 1000, 'grams'),
-(9, 'Nata De Coco', 'Sinker', 1000, 'grams'),
-(12, 'Cream', 'Toppings', 995, 'grams'),
-(13, 'Marshmallows', 'Toppings', 1500, 'grams'),
-(14, 'Caramel', 'Flavor', 1000, 'ml'),
-(15, 'Matcha', 'Flavor', 995, 'grams'),
-(16, 'Oreo', 'Flavor', 1000, 'grams');
+INSERT INTO `tblinventory` (`inventory_id`, `inventory_item`, `item_type`, `quantity`, `unit`, `reorder_point`, `status`) VALUES
+(3, 'Powdered Sugar', 'Sweetener', 2010, 'grams', 100, 'In Stock'),
+(4, 'Arrabica Coffee Bean', 'Coffee Bean', 4990, 'grams', 500, 'In Stock'),
+(5, 'Liberica Coffee Bean', 'Coffee Bean', 480, 'grams', 500, 'Low Stock'),
+(6, 'Oat Milk', 'Milk', 1000, 'ml', 500, 'In Stock'),
+(7, 'Soy Milk', 'Milk', 985, 'ml', 500, 'In Stock'),
+(8, 'Pearls', 'Sinker', 1000, 'grams', 500, 'In Stock'),
+(9, 'Nata De Coco', 'Sinker', 1000, 'grams', 500, 'In Stock'),
+(12, 'Cream', 'Toppings', 995, 'grams', 500, 'In Stock'),
+(13, 'Marshmallows', 'Toppings', 1500, 'grams', 500, 'In Stock'),
+(14, 'Caramel', 'Flavor', 1000, 'ml', 500, 'In Stock'),
+(15, 'Matcha', 'Flavor', 500, 'grams', 500, 'Low Stock'),
+(16, 'Oreo Cookies', 'Flavor', 1000, 'grams', 500, 'In Stock'),
+(48, 'Brown Sugar', 'Sweetener', 5000, 'grams', 500, 'In Stock');
 
 -- --------------------------------------------------------
 
@@ -269,7 +272,14 @@ INSERT INTO `tblinventoryreport` (`inventory_report_id`, `inventory_item`, `inve
 (40, 'Liberica Coffee Bean', 5, -10, 'grams', 'inventory deduct for preparing 1 Vanilla Cream Frappe', '2024-05-06 22:32:29'),
 (41, 'Soy Milk', 7, -15, 'ml', 'inventory deduct for preparing 1 Vanilla Cream Frappe', '2024-05-06 22:32:29'),
 (42, 'Arrabica Coffee Bean', 4, -10, 'grams', 'inventory deduct for preparing 1 Espresso Machiato', '2024-05-16 11:04:44'),
-(43, 'Matcha', 15, -5, 'grams', 'inventory deduct for preparing 1 Espresso Machiato', '2024-05-16 11:04:44');
+(43, 'Matcha', 15, -5, 'grams', 'inventory deduct for preparing 1 Espresso Machiato', '2024-05-16 11:04:44'),
+(44, 'Liberica Coffee Bean', 5, -20, 'grams', 'accidentally spilled', '2024-05-19 23:51:10'),
+(45, 'Liberica Coffee Bean', 5, -30, 'grams', 'another spillage', '2024-05-19 23:53:46'),
+(46, 'Liberica Coffee Bean', 5, 80, 'grams', 'added supply for Liberica Coffee Bean', '2024-05-19 23:55:40'),
+(47, 'Brown Sugar', 48, 5000, 'grams', 'New Inventory initial supply for Brown Sugar', '2024-05-20 10:20:30'),
+(48, '123', 49, 123213, '123', 'New Inventory initial supply for 123', '2024-05-20 12:31:14'),
+(49, 'Powdered Sugar', 3, 3, 'grams', 'added supply for Powdered Sugar', '2024-06-04 21:34:56'),
+(50, 'Powdered Sugar', 3, 7, 'grams', 'added supply for Powdered Sugar', '2024-06-04 21:35:14');
 
 -- --------------------------------------------------------
 
@@ -473,10 +483,10 @@ CREATE TABLE `tblproducts` (
 
 INSERT INTO `tblproducts` (`product_id`, `product_name`, `product_description`, `price`, `image`, `SKU`, `status`, `category`) VALUES
 (7, 'Salted Caramel Cold Breww', 'a salted caramel coffee that is brewed colddss', 130.00, 'coffee-3727673_640.jpg', 50, 'Available', 'brewed'),
-(10, 'Vanilla Cream Frappe', 'A coffee that is frapped with vanilla cream', 200.00, 'stock-of-mix-a-cup-coffee-latte-more-motive-top-view-foodgraphy-generative-ai-photo.jpg', 49, 'Available', 'frappe'),
+(10, 'Vanilla Cream Frappe', 'A coffee that is frapped with vanilla cream', 200.00, 'stock-of-mix-a-cup-coffee-latte-more-motive-top-view-foodgraphy-generative-ai-photo.jpg', 48, 'Available', 'frappe'),
 (11, 'Iced Americano', 'A coffee that is americanized with ice', 100.00, 'stock-of-mix-a-cup-coffee-latte-more-motive-top-view-foodgraphy-generative-ai-photo.jpg', 24, 'Available', 'frappe'),
 (15, 'Iced White Chocolate mocha', 'A white chocolate flavored coffee with ice and mocha', 200.00, 'stock-of-mix-a-cup-coffee-latte-more-motive-top-view-foodgraphy-generative-ai-photo.jpg', 100, 'Available', 'espresso'),
-(16, 'Espresso Machiato', 'A expressed coffee with macchiato', 200.00, 'stock-of-mix-a-cup-coffee-latte-more-motive-top-view-foodgraphy-generative-ai-photo.jpg', 199, 'Available', 'espresso'),
+(16, 'Espresso Machiato', 'A expressed coffee with macchiato', 200.00, 'stock-of-mix-a-cup-coffee-latte-more-motive-top-view-foodgraphy-generative-ai-photo.jpg', 100, 'Available', 'espresso'),
 (17, 'Iced caffe latte', 'a coffee with ice and latted', 130.00, 'stock-of-mix-a-cup-coffee-latte-more-motive-top-view-foodgraphy-generative-ai-photo.jpg', 100, 'Available', 'latte'),
 (21, 'Iced Special Cappuccinoo', 'a coffee with ice and cappucinized but its special', 130.00, 'stock-of-mix-a-cup-coffee-latte-more-motive-top-view-foodgraphy-generative-ai-photo.jpg', 50, 'Available', 'cappuccino');
 
@@ -823,13 +833,13 @@ ALTER TABLE `tblfeedback`
 -- AUTO_INCREMENT for table `tblinventory`
 --
 ALTER TABLE `tblinventory`
-  MODIFY `inventory_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
+  MODIFY `inventory_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
 
 --
 -- AUTO_INCREMENT for table `tblinventoryreport`
 --
 ALTER TABLE `tblinventoryreport`
-  MODIFY `inventory_report_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
+  MODIFY `inventory_report_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51;
 
 --
 -- AUTO_INCREMENT for table `tblorderitem`
@@ -853,13 +863,13 @@ ALTER TABLE `tblpayment`
 -- AUTO_INCREMENT for table `tblproducts`
 --
 ALTER TABLE `tblproducts`
-  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=74;
+  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=76;
 
 --
 -- AUTO_INCREMENT for table `tblproducts_inventory`
 --
 ALTER TABLE `tblproducts_inventory`
-  MODIFY `productsInventory_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=166;
+  MODIFY `productsInventory_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=168;
 
 --
 -- AUTO_INCREMENT for table `tblpromo`

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 06, 2024 at 03:44 PM
+-- Generation Time: Jul 01, 2024 at 06:56 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -111,6 +111,7 @@ CREATE TABLE `tblcoffeeshop` (
   `address` varchar(255) DEFAULT NULL,
   `contact_no` varchar(11) DEFAULT NULL,
   `email` varchar(50) DEFAULT NULL,
+  `VAT` decimal(5,2) NOT NULL,
   `employees_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -118,8 +119,8 @@ CREATE TABLE `tblcoffeeshop` (
 -- Dumping data for table `tblcoffeeshop`
 --
 
-INSERT INTO `tblcoffeeshop` (`coffeeshopid`, `shopname`, `branch`, `address`, `contact_no`, `email`, `employees_id`) VALUES
-(1, 'Only Coffee', 'Legarda Manila ', '2255 Legarda St, Sampaloc, 1008 Metro Manila', '09156351463', 'onlycoffee@gmail.com', NULL);
+INSERT INTO `tblcoffeeshop` (`coffeeshopid`, `shopname`, `branch`, `address`, `contact_no`, `email`, `VAT`, `employees_id`) VALUES
+(1, 'Only Coffee', 'Legarda Manila ', '2255 Legarda St, Sampaloc, 1008 Metro Manila', '09156351463', 'onlycoffee@gmail.com', 15.99, NULL);
 
 -- --------------------------------------------------------
 
@@ -233,7 +234,8 @@ INSERT INTO `tblinventory` (`inventory_id`, `inventory_item`, `item_type`, `quan
 (14, 'Caramel', 'Flavor', 1000, 'ml', 500, 'In Stock'),
 (15, 'Matcha', 'Flavor', 500, 'grams', 500, 'Low Stock'),
 (16, 'Oreo Cookies', 'Flavor', 1000, 'grams', 500, 'In Stock'),
-(48, 'Brown Sugar', 'Sweetener', 5000, 'grams', 500, 'In Stock');
+(48, 'Brown Sugar', 'Sweetener', 5000, 'grams', 500, 'In Stock'),
+(50, 'Condensed Milk', 'Milk', 1450, 'ml', 500, 'In Stock');
 
 -- --------------------------------------------------------
 
@@ -247,6 +249,7 @@ CREATE TABLE `tblinventoryreport` (
   `inventory_id` int(11) NOT NULL,
   `quantity` float NOT NULL,
   `unit` varchar(20) NOT NULL,
+  `record_type` varchar(255) NOT NULL,
   `reason` varchar(255) NOT NULL,
   `datetime` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -255,31 +258,36 @@ CREATE TABLE `tblinventoryreport` (
 -- Dumping data for table `tblinventoryreport`
 --
 
-INSERT INTO `tblinventoryreport` (`inventory_report_id`, `inventory_item`, `inventory_id`, `quantity`, `unit`, `reason`, `datetime`) VALUES
-(27, 'testInv1', 46, 40, 'grams', 'added supply for testInv1', '2024-05-03 21:53:37'),
-(28, 'testInv2', 47, 20, 'grams', 'added supply for testInv2', '2024-05-03 21:53:51'),
-(29, 'testInv1', 46, -30, 'grams', 'inventory deduct for preparing 3 testProd', '2024-05-03 21:54:54'),
-(30, 'testInv2', 47, -15, 'grams', 'inventory deduct for preparing 3 testProd', '2024-05-03 21:54:54'),
-(31, 'testInv1', 46, -11, 'grams', 'spoiled', '2024-05-03 22:12:31'),
-(32, 'testInv1', 46, -9, 'grams', 'broken', '2024-05-03 22:13:13'),
-(33, 'testInv1', 46, 1, 'grams', 'added supply for testInv1', '2024-05-03 22:14:01'),
-(34, 'testInv1', 46, 9, 'grams', 'added supply for testInv1', '2024-05-03 22:29:33'),
-(35, 'testInv1', 46, -1, 'grams', 'spilled', '2024-05-03 22:31:33'),
-(36, 'testInv1', 46, 1, 'grams', 'added supply for testInv1', '2024-05-03 22:35:43'),
-(37, 'testInv1', 46, -1, 'grams', 'spoiler', '2024-05-03 22:39:05'),
-(38, 'testInv1', 46, 1, 'grams', 'added supply for testInv1', '2024-05-03 22:48:10'),
-(39, 'Cream', 12, -5, 'grams', 'inventory deduct for preparing 1 Vanilla Cream Frappe', '2024-05-06 22:32:29'),
-(40, 'Liberica Coffee Bean', 5, -10, 'grams', 'inventory deduct for preparing 1 Vanilla Cream Frappe', '2024-05-06 22:32:29'),
-(41, 'Soy Milk', 7, -15, 'ml', 'inventory deduct for preparing 1 Vanilla Cream Frappe', '2024-05-06 22:32:29'),
-(42, 'Arrabica Coffee Bean', 4, -10, 'grams', 'inventory deduct for preparing 1 Espresso Machiato', '2024-05-16 11:04:44'),
-(43, 'Matcha', 15, -5, 'grams', 'inventory deduct for preparing 1 Espresso Machiato', '2024-05-16 11:04:44'),
-(44, 'Liberica Coffee Bean', 5, -20, 'grams', 'accidentally spilled', '2024-05-19 23:51:10'),
-(45, 'Liberica Coffee Bean', 5, -30, 'grams', 'another spillage', '2024-05-19 23:53:46'),
-(46, 'Liberica Coffee Bean', 5, 80, 'grams', 'added supply for Liberica Coffee Bean', '2024-05-19 23:55:40'),
-(47, 'Brown Sugar', 48, 5000, 'grams', 'New Inventory initial supply for Brown Sugar', '2024-05-20 10:20:30'),
-(48, '123', 49, 123213, '123', 'New Inventory initial supply for 123', '2024-05-20 12:31:14'),
-(49, 'Powdered Sugar', 3, 3, 'grams', 'added supply for Powdered Sugar', '2024-06-04 21:34:56'),
-(50, 'Powdered Sugar', 3, 7, 'grams', 'added supply for Powdered Sugar', '2024-06-04 21:35:14');
+INSERT INTO `tblinventoryreport` (`inventory_report_id`, `inventory_item`, `inventory_id`, `quantity`, `unit`, `record_type`, `reason`, `datetime`) VALUES
+(27, 'testInv1', 46, 40, 'grams', '', 'added supply for testInv1', '2024-05-03 21:53:37'),
+(28, 'testInv2', 47, 20, 'grams', '', 'added supply for testInv2', '2024-05-03 21:53:51'),
+(29, 'testInv1', 46, -30, 'grams', '', 'inventory deduct for preparing 3 testProd', '2024-05-03 21:54:54'),
+(30, 'testInv2', 47, -15, 'grams', '', 'inventory deduct for preparing 3 testProd', '2024-05-03 21:54:54'),
+(31, 'testInv1', 46, -11, 'grams', '', 'spoiled', '2024-05-03 22:12:31'),
+(32, 'testInv1', 46, -9, 'grams', '', 'broken', '2024-05-03 22:13:13'),
+(33, 'testInv1', 46, 1, 'grams', '', 'added supply for testInv1', '2024-05-03 22:14:01'),
+(34, 'testInv1', 46, 9, 'grams', '', 'added supply for testInv1', '2024-05-03 22:29:33'),
+(35, 'testInv1', 46, -1, 'grams', '', 'spilled', '2024-05-03 22:31:33'),
+(36, 'testInv1', 46, 1, 'grams', '', 'added supply for testInv1', '2024-05-03 22:35:43'),
+(37, 'testInv1', 46, -1, 'grams', '', 'spoiler', '2024-05-03 22:39:05'),
+(38, 'testInv1', 46, 1, 'grams', '', 'added supply for testInv1', '2024-05-03 22:48:10'),
+(39, 'Cream', 12, -5, 'grams', '', 'inventory deduct for preparing 1 Vanilla Cream Frappe', '2024-05-06 22:32:29'),
+(40, 'Liberica Coffee Bean', 5, -10, 'grams', '', 'inventory deduct for preparing 1 Vanilla Cream Frappe', '2024-05-06 22:32:29'),
+(41, 'Soy Milk', 7, -15, 'ml', '', 'inventory deduct for preparing 1 Vanilla Cream Frappe', '2024-05-06 22:32:29'),
+(42, 'Arrabica Coffee Bean', 4, -10, 'grams', '', 'inventory deduct for preparing 1 Espresso Machiato', '2024-05-16 11:04:44'),
+(43, 'Matcha', 15, -5, 'grams', '', 'inventory deduct for preparing 1 Espresso Machiato', '2024-05-16 11:04:44'),
+(44, 'Liberica Coffee Bean', 5, -20, 'grams', '', 'accidentally spilled', '2024-05-19 23:51:10'),
+(45, 'Liberica Coffee Bean', 5, -30, 'grams', '', 'another spillage', '2024-05-19 23:53:46'),
+(46, 'Liberica Coffee Bean', 5, 80, 'grams', '', 'added supply for Liberica Coffee Bean', '2024-05-19 23:55:40'),
+(47, 'Brown Sugar', 48, 5000, 'grams', '', 'New Inventory initial supply for Brown Sugar', '2024-05-20 10:20:30'),
+(48, '123', 49, 123213, '123', '', 'New Inventory initial supply for 123', '2024-05-20 12:31:14'),
+(49, 'Powdered Sugar', 3, 3, 'grams', '', 'added supply for Powdered Sugar', '2024-06-04 21:34:56'),
+(50, 'Powdered Sugar', 3, 7, 'grams', '', 'added supply for Powdered Sugar', '2024-06-04 21:35:14'),
+(51, 'Condensed Milk', 50, 1000, 'ml', 'Initial Supply', 'New Inventory initial supply for Condensed Milk', '2024-06-19 10:48:29'),
+(52, 'Condensed Milk', 50, 500, 'ml', 'Adding Supply', 'added supply for Condensed Milk', '2024-06-19 10:48:40'),
+(53, 'Condensed Milk', 50, -20, 'ml', 'Inventory Shrinkage', 'spillage', '2024-06-19 10:49:02'),
+(54, 'Condensed Milk', 50, -10, 'ml', 'Inventory Shrinkage', 'spill', '2024-06-19 10:59:25'),
+(55, 'Condensed Milk', 50, -20, 'ml', 'Product Preparation Deduct', 'inventory deduct for preparing 1 Sweetened Milk', '2024-06-19 11:02:26');
 
 -- --------------------------------------------------------
 
@@ -325,7 +333,18 @@ INSERT INTO `tblorderitem` (`orderitem_id`, `quantity`, `status`, `orderid`, `pr
 (57, 2, 'ended', 126, 15),
 (58, 1, 'completed', 135, 10),
 (59, 1, 'completed', 133, 11),
-(60, 1, 'active', 134, 16);
+(60, 1, 'ended', 134, 16),
+(61, 1, 'completed', 138, 76),
+(62, 1, 'ended', 101, 11),
+(63, 1, 'ended', 101, 16),
+(64, 1, 'ended', 101, 15),
+(65, 1, 'ended', 101, 15),
+(66, 1, 'ended', 101, 17),
+(67, 1, 'active', 103, 7),
+(69, 1, 'active', 101, 7),
+(70, 1, 'active', 103, 7),
+(71, 1, 'active', 104, 7),
+(72, 1, 'active', 106, 7);
 
 -- --------------------------------------------------------
 
@@ -341,66 +360,97 @@ CREATE TABLE `tblorders` (
   `base_coffee_id` int(11) NOT NULL,
   `customer_id` int(11) NOT NULL,
   `order_number` int(11) NOT NULL,
-  `order_status` varchar(255) NOT NULL
+  `order_status` varchar(255) NOT NULL,
+  `payment_proof` varchar(255) DEFAULT NULL,
+  `discount` float DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tblorders`
 --
 
-INSERT INTO `tblorders` (`order_id`, `order_type`, `order_datetime`, `quantity`, `base_coffee_id`, `customer_id`, `order_number`, `order_status`) VALUES
-(108, 'take-out', '2024-04-29 21:08:28', 1, 11, 34, 101, 'payed'),
-(109, 'take-out', '2024-04-29 21:08:28', 1, 16, 34, 101, 'payed'),
-(110, 'take-out', '2024-04-29 21:08:47', 1, 15, 34, 101, 'payed'),
-(111, 'take-out', '2024-04-29 21:14:59', 1, 7, 34, 102, 'payed'),
-(112, 'take-out', '2024-04-29 21:14:59', 1, 11, 34, 102, 'payed'),
-(113, 'take-out', '2024-04-29 21:15:30', 1, 70, 34, 103, 'payed'),
-(114, 'take-out', '2024-04-29 21:15:30', 1, 17, 34, 103, 'payed'),
-(115, 'take-out', '2024-04-29 22:07:30', 1, 7, 34, 104, 'payed'),
-(116, 'take-out', '2024-04-29 22:07:45', 1, 11, 34, 105, 'payed'),
-(117, 'take-out', '2024-04-29 23:38:58', 1, 7, 34, 106, 'payed'),
-(118, 'take-out', '2024-04-29 23:39:10', 1, 11, 34, 107, 'payed'),
-(122, 'take-out', '2024-05-01 16:14:56', 3, 17, 34, 110, 'payed'),
-(123, 'take-out', '2024-05-01 20:59:13', 1, 7, 44, 111, 'payed'),
-(124, 'take-out', '2024-05-01 20:59:13', 3, 15, 44, 111, 'payed'),
-(125, 'take-out', '2024-05-01 21:17:05', 1, 7, 44, 112, 'payed'),
-(126, 'take-out', '2024-05-01 21:22:04', 2, 17, 44, 113, 'payed'),
-(127, 'take-out', '2024-05-01 21:22:04', 1, 15, 44, 113, 'payed'),
-(128, 'take-out', '2024-05-02 12:12:08', 2, 11, 34, 114, 'payed'),
-(129, 'take-out', '2024-05-02 12:12:08', 1, 15, 34, 114, 'payed'),
-(130, 'take-out', '2024-05-02 12:12:09', 2, 16, 34, 114, 'payed'),
-(131, 'take-out', '2024-05-02 12:12:27', 1, 7, 34, 115, 'payed'),
-(132, 'take-out', '2024-05-02 12:12:34', 1, 16, 34, 116, 'payed'),
-(133, 'take-out', '2024-05-02 12:12:44', 1, 21, 34, 117, 'payed'),
-(134, 'take-out', '2024-05-02 12:12:58', 1, 7, 34, 118, 'payed'),
-(135, 'take-out', '2024-05-02 12:26:18', 1, 7, 34, 119, 'payed'),
-(136, 'take-out', '2024-05-02 12:48:21', 1, 15, 34, 120, 'payed'),
-(137, 'take-out', '2024-05-02 12:48:21', 1, 16, 34, 120, 'payed'),
-(141, 'take-out', '2024-05-02 13:38:02', 1, 7, 39, 121, 'payed'),
-(142, 'take-out', '2024-05-02 13:38:02', 2, 17, 39, 121, 'payed'),
-(143, 'take-out', '2024-05-02 13:38:02', 1, 21, 39, 121, 'payed'),
-(144, 'take-out', '2024-05-02 13:38:23', 1, 11, 39, 122, 'payed'),
-(145, 'take-out', '2024-05-02 13:38:23', 1, 15, 39, 122, 'payed'),
-(146, 'take-out', '2024-05-02 13:38:38', 1, 17, 39, 123, 'payed'),
-(147, 'take-out', '2024-05-02 13:38:38', 1, 15, 39, 123, 'payed'),
-(148, 'take-out', '2024-05-02 13:39:21', 1, 15, 35, 124, 'payed'),
-(149, 'take-out', '2024-05-02 13:39:21', 1, 11, 35, 124, 'payed'),
-(150, 'take-out', '2024-05-02 13:39:21', 1, 16, 35, 124, 'payed'),
-(151, 'take-out', '2024-05-02 16:55:20', 1, 7, 66, 125, 'payed'),
-(152, 'take-out', '2024-05-02 16:55:20', 1, 21, 66, 125, 'payed'),
-(153, 'take-out', '2024-05-02 16:55:20', 1, 17, 66, 125, 'payed'),
-(180, 'take-out', '2024-05-03 11:06:36', 2, 15, 34, 126, 'payed'),
-(181, 'take-out', '2024-05-03 11:48:37', 1, 10, 34, 127, 'payed'),
-(182, 'take-out', '2024-05-03 11:48:37', 1, 11, 34, 127, 'payed'),
-(183, 'take-out', '2024-05-03 11:52:06', 1, 10, 34, 128, 'payed'),
-(184, 'take-out', '2024-05-03 11:52:07', 1, 11, 34, 128, 'payed'),
-(185, 'take-out', '2024-05-03 20:52:14', 1, 73, 1, 129, 'payed'),
-(186, 'take-out', '2024-05-03 21:30:40', 1, 73, 1, 130, 'payed'),
-(187, 'take-out', '2024-05-03 21:49:13', 3, 73, 1, 131, 'payed'),
-(188, 'take-out', '2024-05-03 21:54:21', 3, 73, 1, 132, 'payed'),
-(189, 'take-out', '2024-05-04 20:40:54', 1, 11, 1, 133, 'payed'),
-(190, 'take-out', '2024-05-04 20:55:35', 1, 16, 1, 134, 'payed'),
-(191, 'take-out', '2024-05-06 22:23:07', 1, 10, 39, 135, 'payed');
+INSERT INTO `tblorders` (`order_id`, `order_type`, `order_datetime`, `quantity`, `base_coffee_id`, `customer_id`, `order_number`, `order_status`, `payment_proof`, `discount`) VALUES
+(108, 'take-out', '2024-04-29 21:08:28', 1, 11, 34, 101, 'payed', '', 0),
+(109, 'take-out', '2024-04-29 21:08:28', 1, 16, 34, 101, 'payed', '', 0),
+(110, 'take-out', '2024-04-29 21:08:47', 1, 15, 34, 101, 'payed', '', 0),
+(111, 'take-out', '2024-04-29 21:14:59', 1, 7, 34, 102, 'payed', '', 0),
+(112, 'take-out', '2024-04-29 21:14:59', 1, 11, 34, 102, 'payed', '', 0),
+(113, 'take-out', '2024-04-29 21:15:30', 1, 70, 34, 103, 'payed', '', 0),
+(114, 'take-out', '2024-04-29 21:15:30', 1, 17, 34, 103, 'payed', '', 0),
+(115, 'take-out', '2024-04-29 22:07:30', 1, 7, 34, 104, 'payed', '', 0),
+(116, 'take-out', '2024-04-29 22:07:45', 1, 11, 34, 105, 'payed', '', 0),
+(117, 'take-out', '2024-04-29 23:38:58', 1, 7, 34, 106, 'payed', '', 0),
+(118, 'take-out', '2024-04-29 23:39:10', 1, 11, 34, 107, 'payed', '', 0),
+(122, 'take-out', '2024-05-01 16:14:56', 3, 17, 34, 110, 'payed', '', 0),
+(123, 'take-out', '2024-05-01 20:59:13', 1, 7, 44, 111, 'payed', '', 0),
+(124, 'take-out', '2024-05-01 20:59:13', 3, 15, 44, 111, 'payed', '', 0),
+(125, 'take-out', '2024-05-01 21:17:05', 1, 7, 44, 112, 'payed', '', 0),
+(126, 'take-out', '2024-05-01 21:22:04', 2, 17, 44, 113, 'payed', '', 0),
+(127, 'take-out', '2024-05-01 21:22:04', 1, 15, 44, 113, 'payed', '', 0),
+(128, 'take-out', '2024-05-02 12:12:08', 2, 11, 34, 114, 'payed', '', 0),
+(129, 'take-out', '2024-05-02 12:12:08', 1, 15, 34, 114, 'payed', '', 0),
+(130, 'take-out', '2024-05-02 12:12:09', 2, 16, 34, 114, 'payed', '', 0),
+(131, 'take-out', '2024-05-02 12:12:27', 1, 7, 34, 115, 'payed', '', 0),
+(132, 'take-out', '2024-05-02 12:12:34', 1, 16, 34, 116, 'payed', '', 0),
+(133, 'take-out', '2024-05-02 12:12:44', 1, 21, 34, 117, 'payed', '', 0),
+(134, 'take-out', '2024-05-02 12:12:58', 1, 7, 34, 118, 'payed', '', 0),
+(135, 'take-out', '2024-05-02 12:26:18', 1, 7, 34, 119, 'payed', '', 0),
+(136, 'take-out', '2024-05-02 12:48:21', 1, 15, 34, 120, 'payed', '', 0),
+(137, 'take-out', '2024-05-02 12:48:21', 1, 16, 34, 120, 'payed', '', 0),
+(141, 'take-out', '2024-05-02 13:38:02', 1, 7, 39, 121, 'payed', '', 0),
+(142, 'take-out', '2024-05-02 13:38:02', 2, 17, 39, 121, 'payed', '', 0),
+(143, 'take-out', '2024-05-02 13:38:02', 1, 21, 39, 121, 'payed', '', 0),
+(144, 'take-out', '2024-05-02 13:38:23', 1, 11, 39, 122, 'payed', '', 0),
+(145, 'take-out', '2024-05-02 13:38:23', 1, 15, 39, 122, 'payed', '', 0),
+(146, 'take-out', '2024-05-02 13:38:38', 1, 17, 39, 123, 'payed', '', 0),
+(147, 'take-out', '2024-05-02 13:38:38', 1, 15, 39, 123, 'payed', '', 0),
+(148, 'take-out', '2024-05-02 13:39:21', 1, 15, 35, 124, 'payed', '', 0),
+(149, 'take-out', '2024-05-02 13:39:21', 1, 11, 35, 124, 'payed', '', 0),
+(150, 'take-out', '2024-05-02 13:39:21', 1, 16, 35, 124, 'payed', '', 0),
+(151, 'take-out', '2024-05-02 16:55:20', 1, 7, 66, 125, 'payed', '', 0),
+(152, 'take-out', '2024-05-02 16:55:20', 1, 21, 66, 125, 'payed', '', 0),
+(153, 'take-out', '2024-05-02 16:55:20', 1, 17, 66, 125, 'payed', '', 0),
+(180, 'take-out', '2024-05-03 11:06:36', 2, 15, 34, 126, 'payed', '', 0),
+(181, 'take-out', '2024-05-03 11:48:37', 1, 10, 34, 127, 'payed', '', 0),
+(182, 'take-out', '2024-05-03 11:48:37', 1, 11, 34, 127, 'payed', '', 0),
+(183, 'take-out', '2024-05-03 11:52:06', 1, 10, 34, 128, 'payed', '', 0),
+(184, 'take-out', '2024-05-03 11:52:07', 1, 11, 34, 128, 'payed', '', 0),
+(185, 'take-out', '2024-05-03 20:52:14', 1, 73, 1, 129, 'payed', '', 0),
+(186, 'take-out', '2024-05-03 21:30:40', 1, 73, 1, 130, 'payed', '', 0),
+(187, 'take-out', '2024-05-03 21:49:13', 3, 73, 1, 131, 'payed', '', 0),
+(188, 'take-out', '2024-05-03 21:54:21', 3, 73, 1, 132, 'payed', '', 0),
+(189, 'take-out', '2024-05-04 20:40:54', 1, 11, 1, 133, 'payed', '', 0),
+(190, 'take-out', '2024-05-04 20:55:35', 1, 16, 1, 134, 'payed', '', 0),
+(191, 'take-out', '2024-05-06 22:23:07', 1, 10, 39, 135, 'payed', '', 0),
+(192, 'take-out', '2024-06-15 23:38:43', 20, 11, 34, 136, 'canceled', '', 0),
+(193, 'take-out', '2024-06-16 01:02:09', 1, 7, 34, 137, 'canceled', '', 0),
+(194, 'take-out', '2024-06-16 01:02:09', 1, 17, 34, 137, 'canceled', '', 0),
+(195, 'take-out', '2024-06-19 11:01:55', 1, 76, 34, 138, 'payed', '', 0),
+(196, 'take-out', '2024-06-21 00:08:56', 1, 7, 34, 139, 'canceled', NULL, 0),
+(197, 'take-out', '2024-06-21 00:08:57', 2, 15, 34, 139, 'canceled', NULL, 0),
+(198, 'take-out', '2024-06-21 00:13:47', 1, 7, 34, 140, 'canceled', 'Group 368 (1).png', 0),
+(199, 'take-out', '2024-06-21 00:13:47', 1, 17, 34, 140, 'canceled', 'Group 368 (1).png', 0),
+(205, 'take-out', '2024-06-25 19:27:14', 1, 7, 34, 142, 'canceled', NULL, 0.5),
+(206, 'take-out', '2024-06-25 19:27:15', 1, 15, 34, 142, 'canceled', NULL, 0.5),
+(209, 'take-out', '2024-06-27 19:56:04', 2, 7, 34, 101, 'canceled', NULL, 0),
+(211, 'take-out', '2024-06-27 19:57:16', 1, 17, 34, 103, 'canceled', 'order_142 (9).jpg', 0),
+(212, 'take-out', '2024-06-27 19:57:16', 1, 21, 34, 103, 'canceled', 'order_142 (9).jpg', 0),
+(213, 'take-out', '2024-06-27 19:57:42', 1, 21, 34, 104, 'canceled', 'order_139.jpg', 0),
+(214, 'take-out', '2024-06-27 19:57:42', 1, 17, 34, 104, 'canceled', 'order_139.jpg', 0),
+(216, 'take-out', '2024-06-27 22:50:40', 1, 7, 34, 105, 'canceled', 'order_142 (9).jpg', 0.1),
+(217, 'take-out', '2024-06-27 22:50:41', 1, 15, 34, 105, 'canceled', 'order_142 (9).jpg', 0.1),
+(218, 'take-out', '2024-06-27 22:50:41', 1, 17, 34, 105, 'canceled', 'order_142 (9).jpg', 0.1),
+(219, 'take-out', '2024-06-30 22:03:35', 1, 7, 34, 101, 'canceled', 'order_142 (9).jpg', 0.1),
+(220, 'take-out', '2024-06-30 22:03:35', 1, 15, 34, 101, 'canceled', 'order_142 (9).jpg', 0.1),
+(221, 'take-out', '2024-06-30 22:04:06', 1, 15, 34, 102, 'canceled', 'order_142.jpg', 0),
+(222, 'take-out', '2024-06-30 22:04:06', 1, 7, 34, 102, 'canceled', 'order_142.jpg', 0),
+(223, 'take-out', '2024-06-30 22:59:19', 1, 7, 34, 103, 'payed', NULL, 0.1),
+(227, 'take-out', '2024-07-01 00:30:09', 1, 7, 34, 101, 'payed', 'order_142 (8).jpg', 0),
+(228, 'take-out', '2024-07-01 00:30:36', 1, 15, 34, 102, 'declined', 'order_137.jpg', 0),
+(229, 'take-out', '2024-07-01 00:54:00', 1, 7, 34, 103, 'payed', NULL, 0),
+(230, 'take-out', '2024-07-01 00:54:10', 1, 7, 34, 104, 'payed', NULL, 0),
+(231, 'take-out', '2024-07-01 00:54:27', 1, 7, 34, 105, 'declined', 'order_142 (9).jpg', 0),
+(232, 'take-out', '2024-07-01 00:54:51', 1, 7, 34, 106, 'payed', 'order_137.jpg', 0);
 
 -- --------------------------------------------------------
 
@@ -458,7 +508,14 @@ INSERT INTO `tblpayment` (`paymentID`, `order_datetime`, `amountpayed`, `payment
 (225, '2024-05-04 08:49:06', 400.00, 'cash', 34, 126, NULL),
 (226, '2024-05-06 22:28:38', 200.00, 'cash', 39, 135, NULL),
 (227, '2024-05-14 22:57:20', 100.00, 'online', 1, 133, '1231'),
-(228, '2024-05-14 22:57:36', 200.00, 'cash', 1, 134, NULL);
+(228, '2024-05-14 22:57:36', 200.00, 'cash', 1, 134, NULL),
+(229, '2024-06-19 11:02:15', 75.00, 'cash', 34, 138, NULL),
+(230, '2024-06-27 18:27:39', 330.00, 'cash', 34, 101, NULL),
+(233, '2024-07-01 00:06:34', 117.00, 'cash', 34, 103, NULL),
+(235, '2024-07-01 00:52:18', 130.00, 'online', 34, 101, 'asdasd'),
+(236, '2024-07-01 00:55:14', 130.00, 'cash', 34, 103, NULL),
+(237, '2024-07-01 00:55:24', 130.00, 'online', 34, 104, 'qweqwe'),
+(238, '2024-07-01 00:55:37', 130.00, 'online', 34, 106, 'qweqweqwe');
 
 -- --------------------------------------------------------
 
@@ -483,10 +540,10 @@ CREATE TABLE `tblproducts` (
 
 INSERT INTO `tblproducts` (`product_id`, `product_name`, `product_description`, `price`, `image`, `SKU`, `status`, `category`) VALUES
 (7, 'Salted Caramel Cold Breww', 'a salted caramel coffee that is brewed colddss', 130.00, 'coffee-3727673_640.jpg', 50, 'Available', 'brewed'),
-(10, 'Vanilla Cream Frappe', 'A coffee that is frapped with vanilla cream', 200.00, 'stock-of-mix-a-cup-coffee-latte-more-motive-top-view-foodgraphy-generative-ai-photo.jpg', 48, 'Available', 'frappe'),
-(11, 'Iced Americano', 'A coffee that is americanized with ice', 100.00, 'stock-of-mix-a-cup-coffee-latte-more-motive-top-view-foodgraphy-generative-ai-photo.jpg', 24, 'Available', 'frappe'),
+(10, 'Vanilla Cream Frappe', 'A coffee that is frapped with vanilla cream', 200.00, 'stock-of-mix-a-cup-coffee-latte-more-motive-top-view-foodgraphy-generative-ai-photo.jpg', 48, 'Not Available', 'frappe'),
+(11, 'Iced Americano', 'A coffee that is americanized with ice', 100.00, 'stock-of-mix-a-cup-coffee-latte-more-motive-top-view-foodgraphy-generative-ai-photo.jpg', 24, 'Not Available', 'frappe'),
 (15, 'Iced White Chocolate mocha', 'A white chocolate flavored coffee with ice and mocha', 200.00, 'stock-of-mix-a-cup-coffee-latte-more-motive-top-view-foodgraphy-generative-ai-photo.jpg', 100, 'Available', 'espresso'),
-(16, 'Espresso Machiato', 'A expressed coffee with macchiato', 200.00, 'stock-of-mix-a-cup-coffee-latte-more-motive-top-view-foodgraphy-generative-ai-photo.jpg', 100, 'Available', 'espresso'),
+(16, 'Espresso Machiato', 'A expressed coffee with macchiato', 200.00, 'stock-of-mix-a-cup-coffee-latte-more-motive-top-view-foodgraphy-generative-ai-photo.jpg', 100, 'Not Available', 'espresso'),
 (17, 'Iced caffe latte', 'a coffee with ice and latted', 130.00, 'stock-of-mix-a-cup-coffee-latte-more-motive-top-view-foodgraphy-generative-ai-photo.jpg', 100, 'Available', 'latte'),
 (21, 'Iced Special Cappuccinoo', 'a coffee with ice and cappucinized but its special', 130.00, 'stock-of-mix-a-cup-coffee-latte-more-motive-top-view-foodgraphy-generative-ai-photo.jpg', 50, 'Available', 'cappuccino');
 
@@ -833,43 +890,43 @@ ALTER TABLE `tblfeedback`
 -- AUTO_INCREMENT for table `tblinventory`
 --
 ALTER TABLE `tblinventory`
-  MODIFY `inventory_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
+  MODIFY `inventory_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51;
 
 --
 -- AUTO_INCREMENT for table `tblinventoryreport`
 --
 ALTER TABLE `tblinventoryreport`
-  MODIFY `inventory_report_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51;
+  MODIFY `inventory_report_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
 
 --
 -- AUTO_INCREMENT for table `tblorderitem`
 --
 ALTER TABLE `tblorderitem`
-  MODIFY `orderitem_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=61;
+  MODIFY `orderitem_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=73;
 
 --
 -- AUTO_INCREMENT for table `tblorders`
 --
 ALTER TABLE `tblorders`
-  MODIFY `order_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=192;
+  MODIFY `order_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=233;
 
 --
 -- AUTO_INCREMENT for table `tblpayment`
 --
 ALTER TABLE `tblpayment`
-  MODIFY `paymentID` int(100) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=229;
+  MODIFY `paymentID` int(100) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=239;
 
 --
 -- AUTO_INCREMENT for table `tblproducts`
 --
 ALTER TABLE `tblproducts`
-  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=76;
+  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=77;
 
 --
 -- AUTO_INCREMENT for table `tblproducts_inventory`
 --
 ALTER TABLE `tblproducts_inventory`
-  MODIFY `productsInventory_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=168;
+  MODIFY `productsInventory_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=169;
 
 --
 -- AUTO_INCREMENT for table `tblpromo`
