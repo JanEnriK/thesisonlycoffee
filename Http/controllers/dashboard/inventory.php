@@ -229,6 +229,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $quantityString = "-" . $quantity;
 
         // Insert data into tblInventoryReports
+        date_default_timezone_set('Asia/Manila');
         $datetime = date('Y-m-d H:i:s');
         $recordType = "Inventory Shrinkage";
         $sqlInsertReport = "INSERT INTO tblinventoryreport (inventory_item, inventory_id, quantity, unit, record_type, reason) VALUES (:inventoryItem, :itemID, :quantityString, :unit, :record_type, :reason)";

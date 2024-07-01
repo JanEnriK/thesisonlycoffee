@@ -1,6 +1,14 @@
 <?php require "partials/head.php"; ?>
 <?php require "partials/nav.php"; ?>
 <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<!-- jQuery library -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<!-- Popper JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+<!-- Bootstrap JS -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 <style>
   .card-text {
     user-select: none;
@@ -68,10 +76,33 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
               </tr>
             </tfoot>
           </table>
+
+          <!-- section for proof of payment preview -->
+          <div id="proofPreview" class="container mt-4">
+            <h5>Uploaded Proof of Payment:</h5>
+            <div class="row">
+              <div class="col-md-6">
+                <img class="img-fluid action-buttons border border-5 w3-hover-opacity mb-3" id="proofImg" alt="Proof of Payment " onclick="onClick(this)">
+              </div>
+            </div>
+            <label for="inputReferenceNumber">Reference Number:</label>
+            <input type="text" id="inputReferenceNumber" name="inputReferenceNumber">
+            <button type="submit" name="action" value="approve" class="btn btn-primary btn-block">Approve</button>
+            <button type="submit" name="action" value="decline" class="btn btn-danger btn-block">Decline</button>
+          </div>
+
+          <!-- image preview fullscreen modal -->
+          <div id="modal01" class="w3-modal" onclick="this.style.display='none'">
+            <span class="w3-button w3-hover-red w3-xlarge w3-display-topright">&times;</span>
+            <div class="w3-modal-content w3-animate-zoom">
+              <img id="img01" style="width:100%">
+            </div>
+          </div>
+
           <div id="payment_details">
-            <h5 class="modal-title" id="orderDetailsModalLabel">Discount</h5>
-            <label for="discount_code">Discount: </label>
-            <select name="discount_code" id="discount_code">
+            <h5 class="modal-title d-none" id="orderDetailsModalLabel">Discount</h5>
+            <label for="discount_code" class="d-none">Discount: </label>
+            <select name="discount_code" id="discount_code" class="d-none">
               <option value=0 selected>No discount</option>
               <?php foreach ($discount_codes as $discount) : ?>
                 <option value="<?= $discount['value'] ?>">
@@ -108,9 +139,9 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
             <input type="hidden" id="customerIdHidden" name="customerId">
             <input type="hidden" id="orderNumberHidden" name="orderNumber">
           </div>
-          <div class="modal-footer">
-            <button type="submit" class="btn btn-secondary btn-block">TRANSACT</button>
-            <button type="button" class="btn btn-primary btn-block" onclick="downloadPDF('content2')">Print Invoice</button>
+          <div class="modal-footer" id="modalFoot">
+            <button type="submit" id="transact" class="btn btn-secondary btn-block">TRANSACT</button>
+            <button type="button" id="print" class="btn btn-primary btn-block" onclick="downloadPDF('content2')">Print Invoice</button>
           </div>
         </div>
       </form>
@@ -242,8 +273,8 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
   function updatePrintButtonState() {
     console.log("updatePrintButtonState called");
 
-    var printButton = document.querySelector('button[type="button"][onclick="downloadPDF(\'content2\')"]');
-    var submitButton = document.querySelector('form button[type="submit"]');
+    var printButton = document.getElementById('print');
+    var submitButton = document.getElementById('transact');
 
     var cashPaymentSelected = document.getElementById('cashPayment').checked;
     var amountPaidInput = document.getElementById('amountPaid');
@@ -301,8 +332,8 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
     document.getElementById('referenceNumber').value = '';
     document.getElementById('changeDue').textContent = '';
 
-    var printButton = document.querySelector('button[type="button"][onclick="downloadPDF(\'content2\')"]');
-    var submitButton = document.querySelector('form button[type="submit"]');
+    var printButton = document.getElementById('print');
+    var submitButton = document.getElementById('transact');
     printButton.disabled = true;
     submitButton.disabled = true;
   }
@@ -339,7 +370,7 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
     deductedRow.className = 'discount-row';
     deductedRow.innerHTML = `
     <td colspan="3" class="text-right"><strong>Discount:</strong></td>
-    <td>${deductedAmount.toFixed(2)}</td>`;
+    <td id="deductedAmount">${deductedAmount.toFixed(2)}</td>`;
     tbody.appendChild(deductedRow);
 
     const vatPercentage = document.createElement('tr');
@@ -377,8 +408,8 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
     const amountPaid = parseFloat(document.getElementById('amountPaid').value);
 
     // Get the submit button and print pdf
-    const submitButton = document.querySelector('form button[type="submit"]');
-    const printButton = document.querySelector('form button[type="button"]');
+    const submitButton = document.getElementById('transact');
+    const printButton = document.getElementById('print');
 
 
     if (amountPaid >= totalAmount) {
@@ -435,33 +466,73 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
   // Listen for changes to the payment method radio buttons
   document.getElementById('cashPayment').addEventListener('change', updateAmountPaidRequired);
   document.getElementById('onlinePayment').addEventListener('change', updateAmountPaidRequired);
+
+
+  //script for opening image preview of proof of payment
+  function onClick(element) {
+    document.getElementById("img01").src = element.src;
+    document.getElementById("modal01").style.display = "block";
+  }
 </script>
 
 <!-- VISIBLE MAIN -->
 <div class="sellables-container">
   <div class="sellables">
-    <div style="padding: 10px 0;"></div> <!--spacer -->
 
-    <div class="container">
-      <?php if (empty($online_orders)) : ?>
-        <div class="text-center">
-          <h1 style="font-size: 24px;">No current order</h1>
-        </div>
-      <?php else : ?>
-        <div class="row">
-          <?php foreach ($online_orders as $index => $order) : ?>
-            <div class="col-md-3 mb-4">
-              <div class="card">
-                <div class="card-body" onclick="handleItemClick('<?= $order['order_number']; ?>', '<?= $order['customer_id']; ?>')">
-                  <p class="card-text">Order Number: <?= $order['order_number']; ?></p>
-                  <p class="card-text">User Name: <?= $order['username']; ?></p>
-                  <p class="card-text">Order Count: <?= $order['order_number_count']; ?></p>
-                </div>
-              </div>
+    <!-- Online Payment Approval Section -->
+    <div class="container mt-5 border border-3px bg-light">
+      <div class="ml-5 mr-5  p-4">
+        <h2 class="text-center">For Online Payment Approval</h2>
+        <div class="container">
+          <?php if (empty($pendingOnlineOrders)) : ?>
+            <div class="text-center my-4">
+              <h1 style="font-size: 24px;">No current order for payment approval.</h1>
             </div>
-          <?php endforeach; ?>
+          <?php else : ?>
+            <div class="row">
+              <?php foreach ($pendingOnlineOrders as $index => $order) : ?>
+                <div class="col-md-3 mb-4">
+                  <div class="card h-100">
+                    <div class="card-body" onclick="handleItemClick('<?= $order['order_number']; ?>', '<?= $order['customer_id']; ?>', '<?= $order['order_status']; ?>')">
+                      <p class="card-text"><strong>Order Number:</strong> <?= $order['order_number']; ?></p>
+                      <p class="card-text"><strong>User Name:</strong> <?= $order['username']; ?></p>
+                      <p class="card-text"><strong>Order Count:</strong> <?= $order['order_number_count']; ?></p>
+                    </div>
+                  </div>
+                </div>
+              <?php endforeach; ?>
+            </div>
+          <?php endif; ?>
         </div>
-      <?php endif; ?>
+      </div>
+    </div>
+
+    <!-- Onsite Payment Processing Section -->
+    <div class="container mt-5 border border-3px bg-light">
+      <div class="ml-5 mr-5  p-4">
+        <h2 class="text-center">For Onsite Payments</h2>
+        <div class="container">
+          <?php if (empty($online_orders)) : ?>
+            <div class="text-center my-4">
+              <h1 style="font-size: 24px;">No current order for onsite payments.</h1>
+            </div>
+          <?php else : ?>
+            <div class="row">
+              <?php foreach ($online_orders as $index => $order) : ?>
+                <div class="col-md-3 mb-4">
+                  <div class="card h-100">
+                    <div class="card-body" onclick="handleItemClick('<?= $order['order_number']; ?>', '<?= $order['customer_id']; ?>', '<?= $order['order_status']; ?>')">
+                      <p class="card-text"><strong>Order Number:</strong> <?= $order['order_number']; ?></p>
+                      <p class="card-text"><strong>User Name:</strong> <?= $order['username']; ?></p>
+                      <p class="card-text"><strong>Order Count:</strong> <?= $order['order_number_count']; ?></p>
+                    </div>
+                  </div>
+                </div>
+              <?php endforeach; ?>
+            </div>
+          <?php endif; ?>
+        </div>
+      </div>
     </div>
 
 
@@ -476,19 +547,23 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
 <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 <script>
-  //show overlay of that specific order
-  function handleItemClick(orderNumber, customerId) {
+  //show overlay(modal) of that specific order
+  function handleItemClick(orderNumber, customerId, status) {
     // Make AJAX request to fetch order details
     $.ajax({
       url: '/get_orders', // Adjust the URL as necessary
       type: 'POST',
       data: {
         orderNumber: orderNumber,
-        customerId: customerId
+        customerId: customerId,
+        status: status,
       },
       success: function(response) {
         // Parse the JSON response
         const orderDetails = JSON.parse(response);
+        const discount = orderDetails.discount;
+        const orderStatus = orderDetails.order_status;
+
         // Populate the modal with the order details
         $('#orderNumberDisplay').text('Order Number: ' + orderDetails.order_number);
         $('#userNameDisplay').text('User Name: ' + orderDetails.username);
@@ -512,6 +587,10 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
           console.error("No products found or products data is not an array.");
         }
 
+        //apply discount set to be deducted in total amount
+        const deductedAmount = totalAmount * discount;
+        totalAmount = totalAmount - deductedAmount;
+
         // Display the total amount
         $('#totalAmount').text(totalAmount.toFixed(2)); // Format to 2 decimal places
         $('#totalRow').show(); // Show the total row
@@ -531,11 +610,29 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
         radioChecked.dispatchEvent(new Event('change'));
         const amountPaidInput = document.getElementById('amountPaid');
         amountPaidInput.required = true;
+        document.getElementById('deductedAmount').textContent = "- " + deductedAmount.toFixed(2);
 
         // Set the values for the hidden fields
         document.getElementById('totalAmountHidden').value = totalAmount.toFixed(2);
         document.getElementById('customerIdHidden').value = customerId;
         document.getElementById('orderNumberHidden').value = orderNumber;
+
+        //if order is for online payment approval remove unecessary information and show the preview of the proof of payment and a button that approves or decline the payment
+        if (orderStatus == "pending") {
+          document.getElementById('modalFoot').style.display = 'none';
+          document.getElementById('payment_details').style.display = 'none';
+          document.getElementById('proofPreview').style.display = 'block'; // Show the message
+          document.getElementById('proofImg').src = '/uploads/' + orderDetails.payment_proof;
+          document.getElementById('amountPaid').disabled = true;
+        } else if (orderStatus == "notpayed") {
+          document.getElementById('modalFoot').style.display = 'block';
+          document.getElementById('payment_details').style.display = 'block';
+          document.getElementById('proofPreview').style.display = 'none'; // Hide the message
+          document.getElementById('inputReferenceNumber').disabled = true;
+          document.getElementById('amountPaid').disabled = false;
+        }
+
+
 
         // Show the modal
         $('#orderDetailsModal').modal('show');

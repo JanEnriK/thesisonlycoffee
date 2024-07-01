@@ -550,20 +550,37 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
                 return response.json();
             })
             .then(data => {
-                let html = data.map(order => `
-                <div class="col-md-12">
-                    <div class="card mb-3 rounded">
-                        <div class="card-body bg-white" id="card_${order.order_number}">
-                            <span class="d-flex justify-content-between">
-                            <h5 class="card-title pl-lg-2">Order Number: ${order.order_number}</h5>
-                            <h5 class="card-title pl-lg-2 pr-lg-2"># of Items: ${order.record_count}</h5></span>
-                            <div id="items_${order.order_number}" style="display:none;"></div>
-                            <button type="button" id="btn_${order.order_number}" class="btn btn-primary btn-block" onclick="expandView(${order.order_number})">Expand View</button>
-                            <!-- Add more details as per your data structure -->
-                        </div>
-                    </div>
-                </div>
-            `).join('');
+                let html = data.map(order => {
+                    // Convert the order datetime to a Date object
+                    let orderDate = new Date(order.order_datetime);
+                    // Format the date
+                    let formattedDate = orderDate.toLocaleString('en-US', {
+                        weekday: 'long', // Monday
+                        year: 'numeric', // 2024
+                        month: 'long', // April
+                        day: 'numeric', // 29
+                        hour: 'numeric', // 9
+                        minute: 'numeric', // 14
+                        hour12: true, // Use 12-hour clock
+                    });
+
+                    return `
+                            <div class="col-md-12">
+                                <div class="card mb-3 rounded">
+                                    <div class="card-body bg-white" id="card_${order.order_number}">
+                                        <span class="d-flex justify-content-between">
+                                        <h5 class="card-title pl-lg-2">Order Number: ${order.order_number}</h5>
+                                        <h5 class="card-title pl-lg-2 pr-lg-2">No. of Items: ${order.record_count}</h5></span>
+                                        <h6 class="card-title pl-lg-2"><b>Date Ordered:</b> ${formattedDate}</h6>
+                                        <div id="items_${order.order_number}" style="display:none;"></div>
+                                        <button type="button" id="btn_${order.order_number}" class="btn btn-primary btn-block" onclick="expandView(${order.order_number}, '${order.order_datetime}')">Expand View</button>
+                                        <!-- Add more details as per your data structure -->
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                }).join('');
+
                 document.getElementById('orderHistoryContent').innerHTML = `<div class="row">${html}</div>`;
             })
             .catch(error => {
@@ -572,7 +589,7 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
     }
 
     //Expand view of a order history card
-    function expandView(orderNumber) {
+    function expandView(orderNumber, orderDate) {
         const toggleButton = document.querySelector(`#btn_${orderNumber}`);
         const orderDetailsContainer = document.getElementById(`items_${orderNumber}`);
 
@@ -580,7 +597,7 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
             // Expand view
             toggleButton.textContent = 'Contract';
             orderDetailsContainer.style.display = 'block'; // Show the content
-            let url = `fetch_order_details.php?orderNumber=${orderNumber}`;
+            let url = `fetch_order_details.php?orderNumber=${orderNumber}&orderDate=${orderDate}`;
 
             fetch(url)
                 .then(response => {
@@ -606,8 +623,10 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
                             status = "Pending online payment approval...";
                         } else if (status == "notpayed") {
                             status = "Pay at the store cashier.";
+                        } else if (status == "canceled") {
+                            status = "Canceled.There was no payment for this order.";
                         } else {
-                            status = "Payed.";
+                            status = "Payed. Please pick up your order inside the store.";
                         }
                         let orderDate = new Date(data[0].order_datetime);
                         const options = {

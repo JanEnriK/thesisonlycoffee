@@ -6,17 +6,25 @@ if (!isset($_GET['orderNumber'])) {
     echo json_encode(['error' => 'Order number is required']);
     exit;
 }
+if (!isset($_GET['orderDate'])) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Order date is required']);
+    exit;
+}
 
 $orderNumber = $_GET['orderNumber'];
 $orderNumber = mysqli_real_escape_string($conn, $orderNumber);
+$orderDate = $_GET['orderDate'];
 
+// Prepare and execute the first query
 // Prepare and execute the first query
 $query = "SELECT tblproducts.product_name, tblorders.quantity, tblproducts.price, tblorders.discount, tblorders.order_status, tblorders.order_datetime 
          FROM tblorders 
          JOIN tblproducts ON tblorders.base_coffee_id = tblproducts.product_id 
-         WHERE tblorders.order_number =?";
+         WHERE tblorders.order_number =? AND tblorders.order_datetime =?";
+
 $stmt = mysqli_prepare($conn, $query);
-mysqli_stmt_bind_param($stmt, "s", $orderNumber);
+mysqli_stmt_bind_param($stmt, "ss", $orderNumber, $orderDate); // Corrected line
 mysqli_stmt_execute($stmt);
 
 // Bind the results to variables
@@ -34,7 +42,6 @@ while (mysqli_stmt_fetch($stmt)) {
         'discount' => $discount,
         'order_status' => $order_status,
         'order_datetime' => $order_datetime,
-        // Temporarily omit 'VAT' as it will be added after fetching all order details
     ];
 }
 

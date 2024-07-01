@@ -10,14 +10,26 @@ $db = App::resolve('Core\Database');
 function generateUniqueOrderNumber($db)
 {
   // Retrieve the highest order number currently in use
-  $lastOrder = $db->query("SELECT MAX(order_number) as last_order FROM tblorders")->find();
+  $lastOrder = $db->query("SELECT order_number as last_order, order_datetime FROM tblorders ORDER BY order_id DESC LIMIT 1")->find();
 
-  // If there are no orders yet, start from 101
-  if ($lastOrder['last_order'] === null) {
-    $order_number = 101;
+  // Check if there were any orders before
+  if ($lastOrder['last_order'] !== null) {
+    // Convert the datetime of the last order to a date
+    $lastOrderDate = date('Y-m-d', strtotime($lastOrder['order_datetime']));
+    // Get today's date
+    date_default_timezone_set('Asia/Manila');
+    $today = date('Y-m-d');
+
+    // If today's date is different from the last order date, reset the order number to 101
+    if ($lastOrderDate != $today) {
+      $order_number = 101;
+    } else {
+      // Increment the last order number by 1
+      $order_number = $lastOrder['last_order'] + 1;
+    }
   } else {
-    // Increment the last order number by 1
-    $order_number = $lastOrder['last_order'] + 1;
+    // If there are no orders yet, start from 101
+    $order_number = 101;
   }
 
   return $order_number;
