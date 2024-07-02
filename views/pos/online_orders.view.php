@@ -40,6 +40,20 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
   ';
   // Clear the session variable to prevent the alert from showing again on page reload
   unset($_SESSION['orderSubmited']['ordernumber']);
+} elseif (isset($_SESSION['orderDeclined']['ordernumber'])) {
+  echo '
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+  document.addEventListener("DOMContentLoaded", function() {
+      Swal.fire({
+          title: "Order ' . $_SESSION['orderDeclined']['ordernumber'] . ' Has been declined.",
+          icon: "error",
+          confirmButtonText: "OK"
+      });
+  });
+  </script>
+  ';
+  unset($_SESSION['orderDeclined']['ordernumber']);
 }
 ?>
 
@@ -87,7 +101,7 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
             </div>
             <label for="inputReferenceNumber">Reference Number:</label>
             <input type="text" id="inputReferenceNumber" name="inputReferenceNumber">
-            <button type="submit" name="action" value="approve" class="btn btn-primary btn-block">Approve</button>
+            <button type="submit" name="action" value="approve" class="btn btn-primary btn-block" id="approveBtn" disabled>Approve</button>
             <button type="submit" name="action" value="decline" class="btn btn-danger btn-block">Decline</button>
           </div>
 
@@ -150,6 +164,30 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.3.2/jspdf.min.js"></script>
 <script>
+  //event listener to see if reference number has content before approving
+  document.addEventListener("DOMContentLoaded", function() {
+    var inputReferenceNumber = document.getElementById('inputReferenceNumber');
+    var approveBtn = document.getElementById('approveBtn');
+
+    // Function to toggle button state and tooltip
+    function toggleApproveButton() {
+      if (inputReferenceNumber.value.trim().length === 0) {
+        approveBtn.disabled = true;
+        approveBtn.setAttribute('title', 'Please enter a reference number.'); // Show tooltip when disabled
+      } else {
+        approveBtn.disabled = false;
+        approveBtn.removeAttribute('title'); // Remove tooltip when enabled
+      }
+    }
+
+    // Initial check
+    toggleApproveButton();
+
+    // Listen for changes
+    inputReferenceNumber.addEventListener('input', toggleApproveButton);
+  });
+
+  //for printing invoice
   function downloadPDF(containerId) {
     var container = document.getElementById(containerId);
     if (container) {
@@ -624,6 +662,7 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
           document.getElementById('proofPreview').style.display = 'block'; // Show the message
           document.getElementById('proofImg').src = '/uploads/' + orderDetails.payment_proof;
           document.getElementById('amountPaid').disabled = true;
+          document.getElementById('inputReferenceNumber').disabled = false;
         } else if (orderStatus == "notpayed") {
           document.getElementById('modalFoot').style.display = 'block';
           document.getElementById('payment_details').style.display = 'block';

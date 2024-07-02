@@ -512,6 +512,7 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
 
         html2canvas(element, {
             onrendered: function(canvas) {
+
                 var link = document.createElement('a');
                 link.download = 'order_' + orderNumber + '.jpg'; // Specify the file extension as.jpg
                 link.href = canvas.toDataURL("image/jpeg", 0.9); // Convert to JPEG with 90% quality
@@ -550,6 +551,7 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
                 return response.json();
             })
             .then(data => {
+                let counter = 1;
                 let html = data.map(order => {
                     // Convert the order datetime to a Date object
                     let orderDate = new Date(order.order_datetime);
@@ -563,7 +565,8 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
                         minute: 'numeric', // 14
                         hour12: true, // Use 12-hour clock
                     });
-
+                    counter++;
+                    let fullId = `items_${order.order_number}_${counter}`;
                     return `
                             <div class="col-md-12">
                                 <div class="card mb-3 rounded">
@@ -572,8 +575,8 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
                                         <h5 class="card-title pl-lg-2">Order Number: ${order.order_number}</h5>
                                         <h5 class="card-title pl-lg-2 pr-lg-2">No. of Items: ${order.record_count}</h5></span>
                                         <h6 class="card-title pl-lg-2"><b>Date Ordered:</b> ${formattedDate}</h6>
-                                        <div id="items_${order.order_number}" style="display:none;"></div>
-                                        <button type="button" id="btn_${order.order_number}" class="btn btn-primary btn-block" onclick="expandView(${order.order_number}, '${order.order_datetime}')">Expand View</button>
+                                        <div id="${fullId}" style="display:none;"></div>
+                                        <button type="button" id="btn_${order.order_number}_${counter}" class="btn btn-primary btn-block" onclick="expandView('items_${order.order_number}_${counter}', '${order.order_datetime}')">Expand View</button>
                                         <!-- Add more details as per your data structure -->
                                     </div>
                                 </div>
@@ -589,9 +592,12 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
     }
 
     //Expand view of a order history card
-    function expandView(orderNumber, orderDate) {
-        const toggleButton = document.querySelector(`#btn_${orderNumber}`);
-        const orderDetailsContainer = document.getElementById(`items_${orderNumber}`);
+    function expandView(fullId, orderDate) {
+        console.log(typeof fullId);
+        const orderNumber = fullId.split('_')[1];
+        const counter = fullId.split('_')[2];
+        const toggleButton = document.querySelector(`#btn_${orderNumber}_${counter}`);
+        const orderDetailsContainer = document.getElementById(fullId);
 
         if (toggleButton.textContent === 'Expand View') {
             // Expand view
@@ -625,6 +631,8 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
                             status = "Pay at the store cashier.";
                         } else if (status == "canceled") {
                             status = "Canceled.There was no payment for this order.";
+                        } else if (status == "declined") {
+                            status = "Online payment has been declined.";
                         } else {
                             status = "Payed. Please pick up your order inside the store.";
                         }
@@ -683,10 +691,12 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
                         orderDetailsContainer.innerHTML = details;
                     } else {
                         console.error('No order details found');
+                        console.log('No order details found');
                     }
                 })
                 .catch(error => {
                     console.error('Error fetching order details:', error);
+                    console.log('Error fetching order details:', error);
                 });
         } else {
             // Contract view

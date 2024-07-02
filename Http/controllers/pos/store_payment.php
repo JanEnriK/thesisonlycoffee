@@ -42,10 +42,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     'productid' => $items['product_id'],
                 ]);
             }
+            $_SESSION['orderSubmited']['ordernumber'] = $orderNumber;
         } elseif ($_POST['action'] == 'decline') {
             $orderNumber = $_POST['orderNumber'];
             //update status of the order
             $db->query("UPDATE `tblorders` SET `order_status` = 'declined' WHERE order_number = ? AND order_status = 'pending'", [$orderNumber]);
+            $_SESSION['orderDeclined']['ordernumber'] = $orderNumber;
         }
     } else {
         // Retrieve the form data for paying onsite

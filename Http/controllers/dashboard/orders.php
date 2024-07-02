@@ -321,4 +321,147 @@ if (isset($_POST['unarchive_order'])) {
     }
 }
 
+
+
+if (isset($_POST['action'])) {
+    $action = $_POST['action'];
+    // Extract order number and date from the action value
+    // preg_match('/(decline|finish)/', $action, $index);
+    // $actionProcess = $index[0];
+    // preg_match('/finish|decline_(\d+)_([\d\-:\s]+)/', $action, $matches);
+    // $orderNumber = $matches[1];
+    // $orderDate = $matches[2];
+    // $orderDate = strtotime($orderDate);
+    // $orderDate = date('Y-m-d', $orderDate);
+
+    // Use a regex pattern that captures 'decline' or 'finish' without the trailing underscore
+    preg_match('/(decline|finish|reactivate)_(\d+)_([\d\-:\s]+)/', $action, $matches);
+
+    // Check if the expected keys exist in the $matches array
+    if (isset($matches[1], $matches[2], $matches[3])) {
+        $actionProcess = $matches[1]; // 'decline' or 'finish'
+        $orderNumber = $matches[2]; // Order number
+        $orderDate = $matches[3]; // Order date
+        $orderDate = strtotime($orderDate);
+        $orderDate = date('Y-m-d', $orderDate);
+
+        // Your logic continues here...
+    } else {
+        // Handle the case where the regex did not match as expected
+        // This could involve logging an error, showing a message to the user, etc.
+        error_log("Regex did not match expected pattern.");
+    }
+    error_log("actionProcess: $actionProcess");
+    error_log("orderNumber: $orderNumber");
+    error_log("orderDate: $orderDate");
+
+
+    $orderItemsSql = "SELECT * FROM tblorderitem WHERE orderid = :orderNumber AND DATE(date_time) = :orderDate";
+    $orderItemsStmt = $pdo->prepare($orderItemsSql);
+    $orderItemsStmt->bindParam(':orderNumber', $orderNumber, PDO::PARAM_INT);
+    $orderItemsStmt->bindParam(':orderDate', $orderDate);
+    $orderItemsStmt->execute();
+    $orderItems = $orderItemsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    if ($actionProcess == 'finish') {
+        foreach ($orderItems as $items) {
+            $itemDeductSql = "SELECT * FROM tblproducts_inventory WHERE products_id = :productid";
+            $itemDeductStmt = $pdo->prepare($itemDeductSql);
+            $itemDeductStmt->bindParam(':productid', $items['productid'], PDO::PARAM_INT);
+            $itemDeductStmt->execute();
+            $itemDeduct = $itemDeductStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            foreach ($itemDeduct as $deduct) {
+                //getquantity of the order
+                $deductMultiSql = "SELECT * FROM tblorderitem WHERE orderitem_id = :orderitemid";
+                $deductMultiStmt = $pdo->prepare($deductMultiSql);
+                $deductMultiStmt->bindParam(':orderitemid', $items['orderitem_id'], PDO::PARAM_INT);
+                $deductMultiStmt->execute();
+                $deductMulti = $deductMultiStmt->fetch(PDO::FETCH_ASSOC);
+
+                // Deduct the quantity from the inventory
+                $sqlDeduct = "UPDATE tblinventory SET quantity = quantity - (:quantity * :quantityOrder) WHERE inventory_id = :inventoryID";
+                $statementDeduct = $pdo->prepare($sqlDeduct);
+                $statementDeduct->bindParam(':quantity', $deduct['quantity'], PDO::PARAM_INT);
+                $statementDeduct->bindParam(':quantityOrder', $deductMulti['quantity'], PDO::PARAM_INT);
+                $statementDeduct->bindParam(':inventoryID', $deduct['inventory_id']);
+                $statementDeduct->execute();
+
+                //recalculate product sku and availability
+                recalculateStatus($pdo, $productsData);
+
+                //fetch product details
+                $getProductSql = "SELECT * FROM tblproducts WHERE product_id = :productid";
+                $getProductStmt = $pdo->prepare($getProductSql);
+                $getProductStmt->bindParam(':productid', $deduct['products_id'], PDO::PARAM_INT);
+                $getProductStmt->execute();
+                $fetchProduct = $getProductStmt->fetch(PDO::FETCH_ASSOC);
+
+                //fetch inventory details
+                $getInventorySql = "SELECT * FROM tblinventory WHERE inventory_id = :inventoryid";
+                $getInventoryStmt = $pdo->prepare($getInventorySql);
+                $getInventoryStmt->bindParam(':inventoryid', $deduct['inventory_id'], PDO::PARAM_INT);
+                $getInventoryStmt->execute();
+                $fetchInventory = $getInventoryStmt->fetch(PDO::FETCH_ASSOC);
+
+                // Convert the quantity to a string and prepend "-", set the reason for inventory deduct
+                $quantityString = "-" . $deduct['quantity'] * $deductMulti['quantity'];
+                $reason = "inventory deduct for preparing " . $deductMulti['quantity'] . " " . $fetchProduct['product_name'];
+
+                // Insert data into tblInventoryReports"
+                $recordType = "Product Preparation Deduct";
+                $sqlInsertReport = "INSERT INTO tblinventoryreport (inventory_item, inventory_id, quantity, unit, record_type, reason) VALUES (:inventoryItem, :itemID, :quantityString, :unit, :record_type, :reason)";
+                $statementInsertReport = $pdo->prepare($sqlInsertReport);
+                $statementInsertReport->bindParam(':inventoryItem', $fetchInventory['inventory_item']);
+                $statementInsertReport->bindParam(':itemID', $deduct['inventory_id']);
+                $statementInsertReport->bindParam(':quantityString', $quantityString); // Bind the modified quantity string
+                $statementInsertReport->bindParam(':unit', $fetchInventory['unit']); // Bind the unit directly
+                $statementInsertReport->bindParam(':record_type', $recordType);
+                $statementInsertReport->bindParam(':reason', $reason);
+                $statementInsertReport->execute();
+            }
+
+            $sqlEnd = "UPDATE tblorderitem SET status = 'completed'  WHERE orderitem_id = :orderitem_id";
+            $statementEnd = $pdo->prepare($sqlEnd);
+            $statementEnd->bindParam(':orderitem_id', $items['orderitem_id']);
+            $statementEnd->execute();
+        }
+        header('Location: /admin_dashboard/orders');
+        exit();
+    } else {
+        foreach ($orderItems as $items) {
+            $sqlEnd = "UPDATE tblorderitem SET status = 'ended'  WHERE orderitem_id = :orderitem_id";
+            $statementEnd = $pdo->prepare($sqlEnd);
+            $statementEnd->bindParam(':orderitem_id', $items['orderitem_id']);
+            $statementEnd->execute();
+        }
+        header('Location: /admin_dashboard/orders');
+        exit();
+    }
+} else if (isset($_POST['reactivate'])) {
+    $reactivate = $_POST['reactivate'];
+
+    preg_match('/finish|reactivate_(\d+)_([\d\-:\s]+)/', $reactivate, $matches);
+    $orderNumber = $matches[1];
+    $orderDate = $matches[2];
+    $orderDate = strtotime($orderDate);
+    $orderDate = date('Y-m-d', $orderDate);
+
+    $orderItemsSql = "SELECT * FROM tblorderitem WHERE orderid = :orderNumber AND DATE(date_time) = :orderDate";
+    $orderItemsStmt = $pdo->prepare($orderItemsSql);
+    $orderItemsStmt->bindParam(':orderNumber', $orderNumber, PDO::PARAM_INT);
+    $orderItemsStmt->bindParam(':orderDate', $orderDate);
+    $orderItemsStmt->execute();
+    $orderItems = $orderItemsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($orderItems as $items) {
+        $sqlEnd = "UPDATE tblorderitem SET status = 'active'  WHERE orderitem_id = :orderitem_id";
+        $statementEnd = $pdo->prepare($sqlEnd);
+        $statementEnd->bindParam(':orderitem_id', $items['orderitem_id']);
+        $statementEnd->execute();
+    }
+    header('Location: /admin_dashboard/orders');
+    exit();
+}
+
 view('dashboard/orders.view.php');
