@@ -17,7 +17,7 @@ GROUP BY
     DATE(order_datetime), 
     order_number 
 ORDER BY 
-    order_date DESC;
+    order_datetime DESC;
 ";
 $stmt = mysqli_prepare($conn, $query);
 mysqli_stmt_bind_param($stmt, "i", $userID);

@@ -10,7 +10,7 @@ $router->post('/check_discount', 'menu/check_discount.php')->only('auth');
 $router->post('/remove_cart', 'menu/remove_cart.php')->only('auth');
 $router->post('/update_cart', 'menu/update_cart.php')->only('auth');
 $router->get('/get_products', 'get_products.php');
-$router->get('/show_product', 'product_page.php');
+$router->get('/show_product', 'product_page.php')->only('auth');
 
 $router->get('/reservation', 'reservation.php')->only('auth');
 $router->get('/testimonial', 'feedback/testimonial.php')->only('auth');

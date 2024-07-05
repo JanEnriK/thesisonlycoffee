@@ -35,11 +35,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 [$orderNumber, '%' . $date . '%']
             )->get();
             foreach ($orderedItems as $items) {
-                $db->query("INSERT INTO tblorderitem(quantity, status, orderid, productid) VALUES(:quantity, :status, :orderid, :productid)", [
+                $db->query("INSERT INTO tblorderitem(quantity, status, orderid, productid, customerid) VALUES(:quantity, :status, :orderid, :productid, :customerid)", [
                     'quantity' => $items['quantity'],
                     'status' => "active",
                     'orderid' => $orderNumber,
                     'productid' => $items['product_id'],
+                    'customerid' => $customerId,
                 ]);
             }
             $_SESSION['orderSubmited']['ordernumber'] = $orderNumber;
@@ -83,11 +84,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 [$orderNumber, '%' . $date . '%']
             )->get();
             foreach ($orderedItems as $items) {
-                $db->query("INSERT INTO tblorderitem(quantity, status, orderid, productid) VALUES(:quantity, :status, :orderid, :productid)", [
+                $db->query("INSERT INTO tblorderitem(quantity, status, orderid, productid,customerid) VALUES(:quantity, :status, :orderid, :productid,:customerid)", [
                     'quantity' => $items['quantity'],
                     'status' => "active",
                     'orderid' => $orderNumber,
                     'productid' => $items['product_id'],
+                    'customerid' => $customerId,
                 ]);
             }
         } elseif (!empty($paymentOnline)) {
@@ -115,11 +117,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             )->get();
 
             foreach ($orderedItems as $items) {
-                $db->query("INSERT INTO tblorderitem(quantity, status, orderid, productid) VALUES(:quantity, :status, :orderid, :productid)", [
+                $db->query("INSERT INTO tblorderitem(quantity, status, orderid, productid,customerid) VALUES(:quantity, :status, :orderid, :productid,:customerid)", [
                     'quantity' => $items['quantity'],
                     'status' => "active",
                     'orderid' => $orderNumber,
                     'productid' => $items['product_id'],
+                    'customerid' => $customerId,
                 ]);
             }
         } else {

@@ -152,6 +152,7 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
             <input type="hidden" id="totalAmountHidden" name="totalAmount">
             <input type="hidden" id="customerIdHidden" name="customerId">
             <input type="hidden" id="orderNumberHidden" name="orderNumber">
+            <input type="hidden" id="customeridHidden" name="customerid">
           </div>
           <div class="modal-footer" id="modalFoot">
             <button type="submit" id="transact" class="btn btn-secondary btn-block">TRANSACT</button>
@@ -220,7 +221,7 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
       // Create new elements to display the values outside of the original input elements
 
       var discountCodeDisplay = document.createElement('p');
-      discountCodeDisplay.textContent = `Discount Code: ${discountCode}`;
+      discountCodeDisplay.textContent = `Discount: ${document.querySelector('#deductedAmount').textContent} Off`;
       contentToPrint.appendChild(discountCodeDisplay);
 
       // display the payment method
@@ -654,6 +655,7 @@ if (isset($_SESSION['orderSubmited']['ordernumber'])) {
         document.getElementById('totalAmountHidden').value = totalAmount.toFixed(2);
         document.getElementById('customerIdHidden').value = customerId;
         document.getElementById('orderNumberHidden').value = orderNumber;
+        document.getElementById('customeridHidden').value = orderDetails.customer_id;
 
         //if order is for online payment approval remove unecessary information and show the preview of the proof of payment and a button that approves or decline the payment
         if (orderStatus == "pending") {

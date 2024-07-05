@@ -164,6 +164,7 @@ include "connect.php";
                                 <th>Customer User Name</th>
                                 <th>No. of Items</th>
                                 <th>Status</th>
+                                <th>Date & time</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -184,33 +185,43 @@ include "connect.php";
                             //     die("Connection failed: " . $conn->connect_error);
                             // }
 
-                            //for pdo
-                            try {
-                                $pdo = new PDO("mysql:host=$servername;dbname=$dbname", $user, $pass);
-                                $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-                            } catch (PDOException $e) {
-                                die("Database connection failed: " . $e->getMessage());
-                            }
+                            // //for pdo
+                            // try {
+                            //     $pdo = new PDO("mysql:host=$servername;dbname=$dbname", $user, $pass);
+                            //     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                            // } catch (PDOException $e) {
+                            //     die("Database connection failed: " . $e->getMessage());
+                            // }
 
                             // $sql_ordersActive = "SELECT oi.orderitem_id, oi.orderid, oi.productid,e.username, p.product_name, oi.quantity,oi.orderid,oi.status FROM tblorderitem oi JOIN tblproducts p ON oi.productid = p.product_id JOIN tblorders o ON oi.orderid = o.order_number JOIN tblemployees e ON o.customer_id = e.employeeID WHERE oi.status = 'active' and o.order_status = 'payed' and oi.orderitem_id IN (SELECT orderitem_id from tblorderitem) GROUP BY oi.orderitem_id;";
-                            $sql_ordersActive = "SELECT sub.orderid, sub.total_quantity, sub.status, e.username, sub.date_time FROM ( SELECT oi.orderid, SUM(oi.quantity) AS total_quantity, oi.status, oi.date_time FROM tblorderitem oi WHERE oi.status = 'active' GROUP BY oi.orderid, oi.status ) sub JOIN tblorders o ON sub.orderid = o.order_number JOIN tblemployees e ON o.customer_id = e.employeeID WHERE o.order_status = 'payed' and sub.status = 'active' GROUP BY sub.orderid,date(sub.date_time) ORDER BY sub.orderid;";
+                            $sql_ordersActive = "SELECT SUM(quantity) as total_quantity, tblorderitem.* FROM `tblorderitem` WHERE status = 'active' Group by orderid, DATE(date_time) Order by  Date(date_time) DESC, orderid DESC;";
                             $result_ordersActive = $conn->query($sql_ordersActive);
-                            while ($row = $result_ordersActive->fetch_assoc()) : ?>
+                            while ($row = $result_ordersActive->fetch_assoc()) :
+
+                                $sql_getName = "SELECT username FROM tblemployees WHERE employeeID = :customerid";
+                                $statementGetName = $pdo->prepare($sql_getName);
+                                $statementGetName->bindParam(':customerid', $row['customerid']);
+                                $statementGetName->execute();
+                                $username = $statementGetName->fetch(PDO::FETCH_ASSOC);
+                            ?>
                                 <tr>
                                     <td>
-                                        <?php echo $row['orderid']; ?>
+                                        <?= $row['orderid'] ?>
                                     </td>
                                     <td>
-                                        <?php echo $row['username']; ?>
+                                        <?= $username['username'] ?>
                                     </td>
                                     <td>
-                                        <?php echo $row['total_quantity']; ?>
+                                        <?= $row['total_quantity'] ?>
                                     </td>
                                     <td>
-                                        <?php echo $row['status']; ?>
+                                        <?= $row['status'] ?>
                                     </td>
                                     <td>
-                                        <button type="button" onclick="view('<?= $row['orderid'] ?>','<?= $row['date_time'] ?>','<?= $row['username'] ?>','<?= $row['total_quantity'] ?>','<?= $row['status'] ?>')">View</button>
+                                        <?= date('F j, Y h:iA', strtotime($row['date_time'])) ?>
+                                    </td>
+                                    <td>
+                                        <button type="button" onclick="view('<?= $row['orderid'] ?>','<?= $row['date_time'] ?>','<?= $username['username'] ?>','<?= $row['total_quantity'] ?>','<?= $row['status'] ?>')">View</button>
                                     </td>
                                 </tr>
                             <?php endwhile; ?>
@@ -234,29 +245,40 @@ include "connect.php";
                                 <th>Customer User Name</th>
                                 <th>No. of Items</th>
                                 <th>Status</th>
+                                <th>Date & time</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php
-                            $sql_ordersEnded = "SELECT sub.orderid, sub.total_quantity, sub.status, e.username, sub.date_time FROM ( SELECT oi.orderid, SUM(oi.quantity) AS total_quantity, oi.status, oi.date_time FROM tblorderitem oi WHERE oi.status = 'ended' GROUP BY oi.orderid, oi.status ) sub JOIN tblorders o ON sub.orderid = o.order_number JOIN tblemployees e ON o.customer_id = e.employeeID WHERE o.order_status = 'payed' and sub.status = 'ended' GROUP BY sub.orderid,date(sub.date_time) ORDER BY sub.orderid;";
-                            $result_ordersEnded = $conn->query($sql_ordersEnded);
-                            while ($row = $result_ordersEnded->fetch_assoc()) : ?>
+                            $sql_ordersActive = "SELECT SUM(quantity) as total_quantity, tblorderitem.* FROM `tblorderitem` WHERE status = 'ended' Group by orderid, DATE(date_time) Order by  Date(date_time) DESC, orderid DESC;";
+                            $result_ordersActive = $conn->query($sql_ordersActive);
+                            while ($row = $result_ordersActive->fetch_assoc()) :
+
+                                $sql_getName = "SELECT username FROM tblemployees WHERE employeeID = :customerid";
+                                $statementGetName = $pdo->prepare($sql_getName);
+                                $statementGetName->bindParam(':customerid', $row['customerid']);
+                                $statementGetName->execute();
+                                $username = $statementGetName->fetch(PDO::FETCH_ASSOC);
+                            ?>
                                 <tr>
                                     <td>
-                                        <?php echo $row['orderid']; ?>
+                                        <?= $row['orderid'] ?>
                                     </td>
                                     <td>
-                                        <?php echo $row['username']; ?>
+                                        <?= $username['username'] ?>
                                     </td>
                                     <td>
-                                        <?php echo $row['total_quantity']; ?>
+                                        <?= $row['total_quantity'] ?>
                                     </td>
                                     <td>
-                                        <?php echo $row['status']; ?>
+                                        <?= $row['status'] ?>
                                     </td>
                                     <td>
-                                        <button type="button" onclick="view('<?= $row['orderid'] ?>','<?= $row['date_time'] ?>','<?= $row['username'] ?>','<?= $row['total_quantity'] ?>','<?= $row['status'] ?>')">View</button>
+                                        <?= date('F j, Y h:iA', strtotime($row['date_time'])) ?>
+                                    </td>
+                                    <td>
+                                        <button type="button" onclick="view('<?= $row['orderid'] ?>','<?= $row['date_time'] ?>','<?= $username['username'] ?>','<?= $row['total_quantity'] ?>','<?= $row['status'] ?>')">View</button>
                                     </td>
                                 </tr>
                             <?php endwhile; ?>
@@ -271,7 +293,7 @@ include "connect.php";
                 <table class="table table-bordered" id="ordersTable" width="100%" cellspacing="0">
                     <thead>
                         <tr>
-                            <th colspan="5" style="background-color: #008000;">
+                            <th colspan="6" style="background-color: #008000;">
                                 <h3>Completed Orders</h3>
                             </th>
                         </tr>
@@ -280,29 +302,40 @@ include "connect.php";
                             <th>Customer User Name</th>
                             <th>Order Quantity</th>
                             <th>Status</th>
+                            <th>Date & time</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php
-                        $sql_ordersComplete = "SELECT sub.orderid, sub.total_quantity, sub.status, e.username, sub.date_time FROM ( SELECT oi.orderid, SUM(oi.quantity) AS total_quantity, oi.status, oi.date_time FROM tblorderitem oi WHERE oi.status = 'completed' GROUP BY oi.orderid, oi.status ) sub JOIN tblorders o ON sub.orderid = o.order_number JOIN tblemployees e ON o.customer_id = e.employeeID WHERE o.order_status = 'payed' and sub.status = 'completed' GROUP BY sub.orderid,date(sub.date_time) ORDER BY sub.orderid;";
-                        $result_ordersComplete = $conn->query($sql_ordersComplete);
-                        while ($row = $result_ordersComplete->fetch_assoc()) : ?>
+                        $sql_ordersActive = "SELECT SUM(quantity) as total_quantity, tblorderitem.* FROM `tblorderitem` WHERE status = 'completed' Group by orderid, DATE(date_time) Order by  Date(date_time) DESC, orderid DESC;";
+                        $result_ordersActive = $conn->query($sql_ordersActive);
+                        while ($row = $result_ordersActive->fetch_assoc()) :
+
+                            $sql_getName = "SELECT username FROM tblemployees WHERE employeeID = :customerid";
+                            $statementGetName = $pdo->prepare($sql_getName);
+                            $statementGetName->bindParam(':customerid', $row['customerid']);
+                            $statementGetName->execute();
+                            $username = $statementGetName->fetch(PDO::FETCH_ASSOC);
+                        ?>
                             <tr>
                                 <td>
-                                    <?php echo $row['orderid']; ?>
+                                    <?= $row['orderid'] ?>
                                 </td>
                                 <td>
-                                    <?php echo $row['username']; ?>
+                                    <?= $username['username'] ?>
                                 </td>
                                 <td>
-                                    <?php echo $row['total_quantity']; ?>
+                                    <?= $row['total_quantity'] ?>
                                 </td>
                                 <td>
-                                    <?php echo $row['status']; ?>
+                                    <?= $row['status'] ?>
                                 </td>
                                 <td>
-                                    <button type="button" onclick="view('<?= $row['orderid'] ?>','<?= $row['date_time'] ?>','<?= $row['username'] ?>','<?= $row['total_quantity'] ?>','<?= $row['status'] ?>')">View</button>
+                                    <?= date('F j, Y h:iA', strtotime($row['date_time'])) ?>
+                                </td>
+                                <td>
+                                    <button type="button" onclick="view('<?= $row['orderid'] ?>','<?= $row['date_time'] ?>','<?= $username['username'] ?>','<?= $row['total_quantity'] ?>','<?= $row['status'] ?>')">View</button>
                                 </td>
                             </tr>
                         <?php endwhile; ?>
@@ -332,10 +365,23 @@ include "connect.php";
         // Fetch the order items from the server
         getOrderItemsFromServer(order_number, order_date).then(items => {
             // Construct the modal content
+            let dateObj = new Date(order_date);
+
+            let options = {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            };
+            let formatedDate = new Intl.DateTimeFormat('en-US', options).format(dateObj);
+
             var modalContent = `<h4>Order number: ${order_number}</h4>
                                 <h4>Customer Name: ${username}</h4>
                                 <h4>Order Quantity: ${item_count}</h4>
                                 <h4>Status: ${status}</h4>
+                                <h4>Date & Time: ${formatedDate}</h4>
                                 <table>
                                     <tr>
                                         <th>Product</th>
